@@ -213,3 +213,7 @@ How it works, the script's options, running games on the Mac and adding a game: 
 ## License
 
 MIT (see [LICENSE](LICENSE)). Third-party code keeps its own license; see [dm/third_party](dm/third_party/README.md).
+
+### Optional cloud saves
+
+Rebuilt apps include opt-in seedbox-backed save sync. See [cloud-save setup and the user-run pilot](docs/cloud-save.md). The service and client are pending real-device validation.

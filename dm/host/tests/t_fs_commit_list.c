@@ -45,7 +45,15 @@ static Result (*list_hook(void))(const char *const *, int) {
         if (!strcmp(e[i].name, "_ZN2nn2fs6CommitEPKPKci")) return e[i].fn;
     return NULL;
 }
+static unsigned captures;
+static void capture_test(void) {
+    int path=pthread_mutex_trylock(&g_path_lock), mount=pthread_mutex_trylock(&g_lock);
+    CHECK(path == EBUSY && mount == EBUSY, "capture observes committed roots under both locks");
+    if (!path) pthread_mutex_unlock(&g_path_lock); if (!mount) pthread_mutex_unlock(&g_lock);
+    captures++;
+}
 int main(void) {
+    dm_fs_set_sync_callback(capture_test);
     unsetenv("DM_TEST_FS_FAIL"); unsetenv("DM_TEST_FS_FAILAT");
     Result (*commit)(const char *const *, int) = list_hook();
     CHECK(commit != NULL, "exact mount-list Commit symbol is registered");
@@ -64,10 +72,18 @@ int main(void) {
     g_nmnt = 0; // Simulate a fresh mount after process restart.
     CHECK(h_fs_MountSave("save", NULL) == RES_OK, "remount committed data");
     char got[64]; CHECK(read_save("save:/a", got, sizeof got) && !strcmp(got, "new"), "committed bytes survive remount");
+    unsigned char restored=1; uint8_t flag=0;
+    CHECK(setxattr(g_mnt[0].dir,"org.nxnative.restored",&restored,1,0,0)==0, "mark imported save");
+    CHECK(h_fs_RestoreFlag(&flag,"save")==RES_OK && flag, "restore flag visible on mounted save");
+    CHECK(h_fs_Commit("save")==RES_OK && h_fs_RestoreFlag(&flag,"save")==RES_OK && flag, "ordinary commit preserves restore flag");
+    uint8_t option=1;
+    CHECK(h_fs_CommitOpt("save",&option)==RES_OK && h_fs_RestoreFlag(&flag,"save")==RES_OK && !flag, "successful clearing commit clears restore flag");
+    unsigned before_failure=captures;
     fail_write = 1; write_calls = 0;
     CHECK(write_save("save:/a", "bad") == RES_FAIL, "inject a failed write"); fail_write = 0;
     n = dm_fs_commit_count(); int nf = g_nfail;
     CHECK(commit(one, 1) != RES_OK && same(path, "new"), "poisoned list commit fails without publishing bad bytes");
+    CHECK(captures == before_failure, "failed commit does not capture or publish");
     CHECK(dm_fs_commit_count() == n && g_nfail == nf + 1, "refused transaction not counted; front end notified");
     CHECK(write_save("save:/a", "good") == RES_OK && commit(one, 1) == RES_OK && same(path, "good"), "next clean transaction succeeds");
     CHECK(write_save("save:/a", "pending0") == RES_OK, "stage a write before the alias is mounted");

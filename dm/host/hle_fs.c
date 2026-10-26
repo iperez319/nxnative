@@ -484,8 +484,23 @@ HLE_FORCE("_ZN2nn2fs19MountDeviceSaveDataEPKc", "fsp-srv; device save data → t
 }
 HLE_FORCE("_ZN2nn2fs21GetDeviceSaveDataSizeEPlS1_", "fsp-srv; device save data size: 256 MB data + 256 MB journal", Result, h_fs_DeviceSaveSize, int64_t *size, int64_t *journal) { return h_fs_SaveSize(size, journal, NULL); }
 HLE_FORCE("_ZN2nn2fs20ExtendDeviceSaveDataEll", "fsp-srv; extend device save data: the host directory has no size limit", Result, h_fs_ExtendDeviceSave, int64_t size, int64_t journal) { return h_fs_ExtendSave(NULL, size, journal); }
-// The restore flag marks save data the system restored from a backup (cloud save data backup), which a game may check once and then clear with the commit option below; the host never restores
-HLE_FORCE("_ZN2nn2fs22GetSaveDataRestoreFlagEPbPKc", "fsp-srv; save data restored from a backup: never", Result, h_fs_RestoreFlag, uint8_t *out, const char *name) { (void)name; *out = 0; return RES_OK; }
+// Cloud imports mark each root with a persistent host attribute. Working clones
+// preserve it; the successful CommitOption clearing bit removes it from both trees.
+HLE_FORCE("_ZN2nn2fs22GetSaveDataRestoreFlagEPbPKc", "fsp-srv; persistent restored-root marker", Result, h_fs_RestoreFlag, uint8_t *out, const char *name) {
+    PATH_LOCK(); pthread_mutex_lock(&g_lock); *out = 0;
+    for (int i=0;i<g_nmnt;i++) if (!strcmp(g_mnt[i].name,name)) {
+        unsigned char value=0; if (getxattr(g_mnt[i].dir,"org.nxnative.restored",&value,1,0,0)==1) *out=value != 0;
+    }
+    pthread_mutex_unlock(&g_lock); return RES_OK;
+}
+// Optional shared Apple sync hook; filesystem-only test binaries need no network adapter.
+static void (*dm_sync_committed)(void);
+void dm_fs_set_sync_callback(void (*callback)(void)) { dm_sync_committed = callback; }
+void dm_fs_sync_capture(void) {
+    PATH_LOCK(); pthread_mutex_lock(&g_lock);
+    if (dm_sync_committed) dm_sync_committed();
+    pthread_mutex_unlock(&g_lock);
+}
 static _Atomic uint64_t g_save_commits;   // number of successful commits (used by the front end when going to background to wait for "the game's current save has been committed")
 uint64_t dm_fs_commit_count(void) { return atomic_load(&g_save_commits); }
 // Both Commit overloads share this transaction engine. Caller holds the path
@@ -527,6 +542,7 @@ static Result commit_mount_locked(int i, int *notify_error) {
     static int n; if (r == RES_OK) { uint64_t tc2 = clock_gettime_nsec_np(CLOCK_MONOTONIC);
         LOG("save commit #%d: %s swapped atomically into %s (%d save writes so far) (clone + swap %llu us, since this transaction's first write %llu us)", ++n, g_mnt[i].dir, g_mnt[i].commit, atomic_load(&g_save_writes),
             (unsigned long long)((tc2 - tc1) / 1000), (unsigned long long)(tw0 ? (tc2 - tw0) / 1000 : 0)); atomic_fetch_add(&g_save_commits, 1);
+        if (dm_sync_committed) dm_sync_committed(); // clone while both locks still protect every committed root
     }
     return r;
 }
@@ -566,8 +582,16 @@ out:
     if (notify_error) front_save_failed(notify_error);
     return r;
 }
-// The overload with a CommitOption (Animal Crossing: New Horizons 3.0.3): its only flag clears the restore flag, which the host never sets
-HLE_FORCE("_ZN2nn2fs6CommitEPKcRKNS0_12CommitOptionE", "fsp-srv; same as Commit (the option only clears the restore flag)", Result, h_fs_CommitOpt, const char *name, const void *opt) { (void)opt; return h_fs_Commit(name); }
+// CommitOption bit zero clears the restore marker only after a successful commit.
+HLE_FORCE("_ZN2nn2fs6CommitEPKcRKNS0_12CommitOptionE", "fsp-srv; commit and optionally clear restore marker", Result, h_fs_CommitOpt, const char *name, const void *opt) {
+    Result r=h_fs_Commit(name); if (r != RES_OK || !opt || !(*(const uint8_t *)opt & 1)) return r;
+    PATH_LOCK(); pthread_mutex_lock(&g_lock);
+    for (int i=0;i<g_nmnt;i++) if (!strcmp(g_mnt[i].name,name)) {
+        removexattr(g_mnt[i].dir,"org.nxnative.restored",0);
+        if (g_mnt[i].commit[0]) removexattr(g_mnt[i].commit,"org.nxnative.restored",0);
+    }
+    pthread_mutex_unlock(&g_lock); return r;
+}
 // SDK 11's old name: CommitSaveData(mount name) is the later Commit (Metroid Dread)
 HLE_FORCE("_ZN2nn2fs14CommitSaveDataEPKc", "fsp-srv; same as Commit (SDK 11's old name)", Result, h_fs_CommitSaveData, const char *name) { return h_fs_Commit(name); }
 HLE_FORCE("_ZN2nn2fs7UnmountEPKc", "fsp-srv; the mount table is permanent, unmounting is a no-op", void, h_fs_Unmount, const char *name) { (void)name; }

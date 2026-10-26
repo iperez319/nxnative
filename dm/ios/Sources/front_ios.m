@@ -6,6 +6,7 @@
 #import <AVFAudio/AVFAudio.h>
 #include <errno.h>
 #include "front.h"
+#include "save_sync.h"
 #include "hle.h"
 #include "dm.h"
 #include "haptics_apple.h"
@@ -46,14 +47,17 @@ static UILabel *front_ios_fps_label(void);
 @property (nonatomic, strong) UIView *pad;
 @property (nonatomic, strong) UILabel *fps;
 @property (nonatomic) BOOL launched;
+@property (nonatomic, strong) UIButton *syncButton;
 - (void)startGame;
 @end
 static DmRootVC *g_root;
 static void launcher_done(void) { [g_root startGame]; }
+static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, launcher_done)) [g_root startGame]; }
 @implementation DmRootVC
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = UIColor.blackColor;
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(syncForeground:) name:UIApplicationDidBecomeActiveNotification object:nil];
     front_ios_power_watch();
     if (!front_ios_boot_ok()) {   // No game files: show a hint and do not start the host
         UILabel *lb = [[UILabel alloc] initWithFrame:CGRectInset(self.view.bounds, 40, 40)];
@@ -80,6 +84,11 @@ static void launcher_done(void) { [g_root startGame]; }
     if (self.fps) [self.view addSubview:self.fps];
     [self.view setNeedsLayout]; [self.view layoutIfNeeded];
     UIApplication.sharedApplication.idleTimerDisabled = YES;
+    UIButton *syncButton=[UIButton buttonWithType:UIButtonTypeSystem];
+    self.syncButton=syncButton;
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(syncStatus:) name:@"DMSaveSyncStatus" object:nil];
+    syncButton.frame=CGRectMake(12,12,300,32); [syncButton setTitle:@"Cloud saves" forState:UIControlStateNormal];
+    [syncButton addTarget:self action:@selector(cloudSaveMenu) forControlEvents:UIControlEventTouchUpInside]; [self.view addSubview:syncButton];
     front_ios_boot();
 }
 - (void)viewDidLayoutSubviews {
@@ -95,10 +104,13 @@ static void launcher_done(void) { [g_root startGame]; }
 }
 - (void)viewDidAppear:(BOOL)a {
     [super viewDidAppear:a];
-    if (self.launched || !front_ios_boot_ok()) return;
+    if (self.launched || !front_ios_boot_ok() || UIApplication.sharedApplication.applicationState == UIApplicationStateBackground) return;
     self.launched = YES; g_root = self;
-    if (!dm_show_launcher((__bridge void *)self, launcher_done)) [self startGame];   // the settings screen first (Launcher.swift), when the app has one
+    dm_sync_prelaunch((__bridge void *)self, sync_done); // before graphics resources and guest mounts
 }
+- (void)syncForeground:(NSNotification *)note { if (!self.launched) [self viewDidAppear:NO]; }
+- (void)syncStatus:(NSNotification *)note { [self.syncButton setTitle:[@"Cloud: " stringByAppendingString:note.object] forState:UIControlStateNormal]; }
+- (void)cloudSaveMenu { dm_sync_menu((__bridge void *)self); }
 - (BOOL)prefersHomeIndicatorAutoHidden { return YES; }
 - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures { return UIRectEdgeAll; }   // Edge gestures need two swipes, to avoid accidental exits
 - (BOOL)prefersStatusBarHidden { return YES; }
@@ -256,7 +268,7 @@ void front_ios_focus_event(int ev) {
     if (!g_layer) return;
     switch (ev) {
         case 0: dm_gamepad_reset(); dm_focus_set(2); break;
-        case 1: UIApplication.sharedApplication.idleTimerDisabled = NO; dm_focus_set(3); g_audio_bg = 1; front_ios_audio_apply(); guest_clock_freeze_for(1, 1); dm_gfx_suspend(1); break;
+        case 1: dm_sync_tick(); UIApplication.sharedApplication.idleTimerDisabled = NO; dm_focus_set(3); g_audio_bg = 1; front_ios_audio_apply(); guest_clock_freeze_for(1, 1); dm_gfx_suspend(1); break;
         case 2: dm_gfx_suspend(0); guest_clock_freeze_for(1, 0); front_ios_audio_session(); g_audio_bg = 0; front_ios_audio_apply(); dm_focus_set(2); break;
         case 3:   // Becoming active again also ends an interruption whose "ended" never came (not every one sends it), and retries a session that would not activate on the way back
             UIApplication.sharedApplication.idleTimerDisabled = YES;
