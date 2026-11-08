@@ -4,7 +4,7 @@
 # deflate level 6, a file whose deflate is not smaller is stored (zip's rule), and names ending in a --store suffix are always stored (the profile's zip_store, compared without regard to case).
 # Speed (Info-ZIP managed about 100 MB/s on the T7): files up to BIG are read, and deflated, by a thread pool (zlib releases the GIL) while this thread writes them in order;
 # bigger files are streamed here, their CRC patched into the local header afterwards (no data descriptors). Zip64 fields wherever a size, an offset or the entry count passes its 32 / 16-bit field.
-# Usage: pack_ipa.py <out.ipa> [--store .a:.b] [--skip <archive path>]... <archive path>=<source folder>...
+# Usage: pack_ipa.py <out.ipa> [--store .a:.b] [--skip <archive path>]... <archive path>=<source file or folder>...
 #   Mappings are packed in command-line order; put the files that change least first, and the app last
 #   --skip: an archive path left out of the walk of the folder that holds it (folders a stale app build still has, the signature); a mapping of its own still adds it
 #   --skip-suffix: files whose names end so are left out of every walk (build_ipa.sh: the pulling vertex libraries _bp.metallib when the profile's pso_mtl4 is off, unless IOS_PULL overrides it)
@@ -13,7 +13,10 @@
 #   unchanged; --no-reuse forces a full pack. The index holds only source metadata and compression settings; ZIP metadata comes from the old IPA.
 #   Only mappings whose source folder is on APFS reuse files; other mappings pack their files again. The kept run needs an APFS clone of the old IPA; if cloning fails, eligible files are copied compressed.
 #   Reused bytes are not checked against their CRC: damage inside the old IPA carries over. Use --no-reuse or delete <out.ipa>.idx to rebuild
-import argparse, collections, concurrent.futures as cf, ctypes, json, os, stat, struct, sys, time, zipfile, zlib
+import argparse, atexit, collections, concurrent.futures as cf, ctypes, json, os, re, shutil, stat, struct, sys, tempfile, time, zipfile, zlib
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'tools'))
+import shader_lib
 
 LEVEL = 6
 IDX_VERSION = 3
@@ -49,7 +52,9 @@ def entries(maps, skip, skip_suffix=()):
             p = '/'.join(parts[:i])
             if p + '/' not in seen:
                 add(p + '/', None, None); parents.add(p + '/')
-        add(arc + '/', src, os.stat(src)); walk(src, arc)
+        source_stat = os.stat(src)
+        if stat.S_ISREG(source_stat.st_mode): add(arc, src, source_stat)
+        else: add(arc + '/', src, source_stat); walk(src, arc)
     return out
 
 
@@ -223,9 +228,25 @@ def prefix(es, files, infos, old, idx, apfs):
     return keep, pos
 
 
+def library_map(arc, src, skip_suffix, out):
+    """An NVN game's libraries, mapped as <app>/msl/[p<N>/]b-<chain>, when they are the one file b-<chain>.img (dm/tools/shader_lib.py): that file at <archive path>.img. The NSP script's image already leaves
+    out what its app does not read. A build by hand that wants less than the image holds gets a copy, beside the IPA until the end of the pack (deflated again each time: a new file is never reused),
+    and one that wants the pulling libraries from an image without them stops here, as they would only fail on the device. Anything else goes as mapped"""
+    if not re.fullmatch(r'.*/msl/(p\d+/)?b-[^/]+', arc) or not str(shader_lib.view(src)).endswith('.img'): return arc, src
+    if shader_lib.PULLING not in skip_suffix and shader_lib.left_out_pulling(src):
+        sys.exit(f'[RED] pack_ipa: {shader_lib.image_of(src)} has no pulling vertex libraries, and this app needs them: run the NSP script again, which builds them')
+    image = shader_lib.image_of(src)
+    if any(p.name.endswith(skip_suffix) for p in shader_lib.view(src).iterdir()) if skip_suffix else False:
+        work = tempfile.mkdtemp(prefix=os.path.basename(out) + '.msl-', dir=os.path.dirname(os.path.abspath(out)))
+        atexit.register(shutil.rmtree, work, True)
+        image = os.path.join(work, os.path.basename(image))
+        shader_lib.subset(src, image, skip_suffix)
+    return arc + '.img', image
+
+
 def main():
-    ap = argparse.ArgumentParser(description='Pack an IPA (zip) from source folders mapped to archive paths, in parallel')
-    ap.add_argument('out'); ap.add_argument('maps', nargs='+', metavar='archive_path=folder')
+    ap = argparse.ArgumentParser(description='Pack an IPA (zip) from files and folders mapped to archive paths, in parallel')
+    ap.add_argument('out'); ap.add_argument('maps', nargs='+', metavar='archive_path=source')
     ap.add_argument('--store', default='', help='suffixes stored without compressing, separated by ":"')
     ap.add_argument('--skip', action='append', default=[], help='an archive path left out of the folder walk that would add it')
     ap.add_argument('--skip-suffix', action='append', default=[], help='files whose names end so are left out of every folder walk')
@@ -234,7 +255,8 @@ def main():
     maps = []
     for m in a.maps:
         arc, sep, src = m.partition('=')
-        if not sep or not arc.strip('/') or not os.path.isdir(src): sys.exit(f'[RED] pack_ipa: not <archive path>=<folder>: {m}')
+        if sep: arc, src = library_map(arc, src, tuple(a.skip_suffix), a.out)
+        if not sep or not arc.strip('/') or not (os.path.isdir(src) or os.path.isfile(src)): sys.exit(f'[RED] pack_ipa: not <archive path>=<file or folder>: {m}')
         maps.append((arc.strip('/'), src))
     store = tuple(s.lower() for s in a.store.split(':') if s)
     t0 = time.time()

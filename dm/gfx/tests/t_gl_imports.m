@@ -6,7 +6,7 @@ uint64_t resolve_import(module_t *m, const char *name);
 int hle_implements(const char *name);
 void *front_metal_layer(void) { return NULL; }
 module_t *module_of(const void *p) { (void)p; return NULL; }
-module_t g_mod[MAX_MOD]; int g_nmod;
+module_t *g_mod; int g_nmod;
 struct dm_flags g_flag;
 void svc_thread_dump(void) {}
 void dm_vi_layer_size(int *w, int *h) { *w = *h = 0; }
@@ -14,6 +14,7 @@ void dm_vi_layer_crop(int c[4]) { memset(c, 0, 4 * sizeof *c); }
 int dm_opmode(void) { return 1; }
 uint64_t now_ns(void) { return clock_gettime_nsec_np(CLOCK_UPTIME_RAW); }
 uint64_t guest_ns(void) { return 0; }
+uint64_t guest_ticks(void) { return 0; }
 void guest_clock_read_wait(void) {}
 void thr_svc_enter(uint64_t *r, uint64_t a) { (void)r; (void)a; }
 void thr_svc_leave(void) {}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # A repeatable benchmark of a game in the Mac host: the same save, the same scripted route (button presses and stick moves at fixed times from start), the same measuring window,
 # and frame-time percentiles from the host's per-frame timing rows (DM_NVN_TSV): frame time (start to start), the interval each frame stayed on screen, GPU time, frames per second.
-# Variants run the same route with other settings, in turn and repeated, so two hosts or two sets of switches compare under the same load; a screenshot at the same moments of
-# every run shows whether a variant changes the picture.
+# Variants run the same route with other settings, in turn and repeated, so two hosts or two sets of switches compare under the same load; a screenshot after the measurement
+# window of every run shows whether a variant changes the picture without stalling a measured frame.
 # Usage: python3 scripts/bench.py <id>_build folder [options]   (the folder the NSP script made with --platform mac: tools/dmhost, the rewritten modules, the extracted RomFS,
 #   shader/cache and font; the game's title ID is the folder name's start). -h lists the options. Exit code 0 when every run gave frames, 1 otherwise.
 #   --route <name>: a route of the game's profile (dm/games/<id>/bench.tsv); the first one by default. --save <folder>: the save the route starts from (default <id>_build/run/save);
@@ -17,6 +17,8 @@ import argparse, datetime, json, math, os, re, shutil, signal, statistics, subpr
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / 'dm/tools'))
+import romfs as rfs
 
 
 def fail(msg):
@@ -78,14 +80,15 @@ def run_one(a, gid, build, var, route, out, lock):
     host = Path(var.get('host') or build / 'tools/dmhost')
     patched = Path(var.get('patched') or newest(build.glob('patched_v*')) or fail(f'no rewritten modules (patched_v*) in {build}'))
     ver = patched.name.removeprefix('patched_')
-    romfs = build / 'extract' / ver / 'RomFS'
-    if not romfs.is_dir(): romfs = newest(build.glob('extract/v*')) / 'RomFS'
+    romfs = rfs.source(build / 'extract' / ver)
+    if not romfs.is_dir(): romfs = rfs.source(newest(build.glob('extract/v*')))
     prof = build / 'profile' / gid if (build / 'profile' / gid / 'game.tsv').is_file() else REPO / 'dm/games' / gid
     out.mkdir(parents=True, exist_ok=True); save, temp = out / 'save', out / 'temp'
     shutil.rmtree(save, ignore_errors=True); shutil.copytree(a.save, save); temp.mkdir(exist_ok=True)
     env.update(DM_ROOT=str(build), DM_ROMFS=str(romfs), DM_SAVE=str(save), DM_TEMP=str(temp), DM_MSL_DIR=str(var.get('msl') or build / 'shader/cache'),
                DM_FONT_DIR=str(build / 'font'), DM_NVN_SHMAP=str(var.get('shmap') or prof / 'shader_map.tsv'), DM_WINDOW='1', DM_AUDIO='0', DM_KEYS=route['keys'],
                DM_NVN_TSV=str(out / 'frames.tsv'), DM_NVN_TSV_CALLS='0', DM_CTL=str(out / 'ctl'), DM_METAL_HUD='0' if a.no_hud else '1')
+    if (build / 'pso/mac').is_dir(): env.setdefault('DM_PSO_BUNDLE', str(build / 'pso/mac'))   # the offline pipeline archive the Mac app bundles (launcher.c sets it there); without it an NVN game rebuilds every base before its first frame
     if (build / 'aoc').is_dir(): env['DM_AOC_DIR'] = str(build / 'aoc')
     archive = var.get('pso') or a.pso_archive
     if archive: env['DM_PSO_ARCHIVE'] = archive if archive == 'off' else str(Path(archive).expanduser().resolve())
@@ -97,7 +100,9 @@ def run_one(a, gid, build, var, route, out, lock):
         if k not in ('host', 'msl', 'shmap', 'patched', 'pso'): env[k] = v
     (out / 'ctl').write_text('')
     end = route['from'] + route['secs'] + 2
-    shots = sorted(a.shots) if a.shots else [route['from'] + route['secs'] * f for f in (0.25, 0.75)]
+    # Readback/PNG capture can stall a frame and change adaptive pacing. Keep the
+    # default visual proof after the timing window, before the two-second exit tail.
+    shots = sorted(a.shots) if a.shots else [route['from'] + route['secs'] + 0.5]
     p = None
     if lock: wait_lock(lock)
     try:
@@ -118,17 +123,35 @@ def run_one(a, gid, build, var, route, out, lock):
     budget = 1000.0 / (a.fps or 60)
     s = summary(*frames(out / 'frames.tsv', route['from'], route['from'] + route['secs']), route['secs'], budget) if (out / 'frames.tsv').is_file() else {'frames': 0}
     log_text = (out / 'log.txt').read_text(errors='replace')
-    m = re.findall(r'variable frame step: [\d.]+ fps, game time .*?\(([\d.]+) of real time\)', log_text)
+    m = re.findall(r'frame step: game time [\d.]+ s in [\d.]+ s \(([\d.]+) of real time\)', log_text)
     if m: s['game_speed'] = float(m[-1])
     s['red_lines'] = sum(1 for ln in log_text.splitlines() if '[RED]' in ln)
     return s
 
 
-def wait_lock(lock):   # the measuring lock other runs on this Mac hold while a game runs (an empty file name turns it off); taken atomically
+def lock_holder(lock):
+    """The process ID a measuring lock names (its text: the ID alone, or '… pid <ID>'), when that process still runs; None for a free lock, one naming no ID (taken as held: 0),
+    and a stale one: its process gone and no game running on this Mac"""
+    try: text = Path(lock).read_text()
+    except OSError: return None
+    m = re.search(r'(?:^|pid )(\d+)\s*$', text.strip())
+    if not m: return 0
+    pid = int(m.group(1))
+    try: os.kill(pid, 0); return pid
+    except PermissionError: return pid
+    except ProcessLookupError: pass
+    return 0 if subprocess.run(['pgrep', '-x', 'dmhost'], capture_output=True).returncode == 0 else None
+
+
+def wait_lock(lock, owner=''):   # the measuring lock other runs on this Mac hold while a game runs (an empty file name turns it off); taken atomically; a stale one is removed
     while True:
         try:
-            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY); os.write(fd, str(os.getpid()).encode()); os.close(fd); return
-        except FileExistsError: time.sleep(2)
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY); os.write(fd, (f'{owner} pid {os.getpid()}' if owner else str(os.getpid())).encode()); os.close(fd); return
+        except FileExistsError:
+            if lock_holder(lock) is None:
+                print(f'removing the stale measuring lock {lock} ({Path(lock).read_text(errors="replace").strip()[:80]}: its process is gone, no game runs)', flush=True)
+                Path(lock).unlink(missing_ok=True); continue
+            time.sleep(2)
 
 
 def table(results, keys):
@@ -156,7 +179,7 @@ def main():
     ap.add_argument('--env', action='append', default=[], help='KEY=VALUE for every variant (repeatable)')
     ap.add_argument('--pso-archive', help='DM_PSO_ARCHIVE for every variant (the pipeline archive; default the host\'s own)')
     ap.add_argument('--lock', default='', help='a lock file to hold while a game runs, shared with other measuring runs on this Mac')
-    ap.add_argument('--shots', type=lambda v: [float(x) for x in v.split(',')], help='screenshot times in seconds from host start, comma-separated (default: a quarter and three quarters into the window)')
+    ap.add_argument('--shots', type=lambda v: [float(x) for x in v.split(',')], help='screenshot times in seconds from host start, comma-separated (default: after the measurement window; in-window captures perturb timing)')
     ap.add_argument('--no-hud', action='store_true', help='no Metal performance HUD')
     ap.add_argument('--out', help='the output folder (default <id>_build/bench/<date-time>)')
     a = ap.parse_args()
