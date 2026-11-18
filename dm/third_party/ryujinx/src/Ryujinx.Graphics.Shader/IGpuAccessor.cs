@@ -8,6 +8,11 @@ namespace Ryujinx.Graphics.Shader
     /// </summary>
     public interface IGpuAccessor : ILogger
     {
+        // A serialized callable program may use constant banks for its runtime
+        // descriptor arena, rather than the ordinary game-UBO address convention.
+        // Keep such global addresses in the checked flat address space.
+        bool QueryRawGlobalMemory() => false;
+
         // Fixed VS capture ABI used by the offline Metal geometry path.
         bool QueryGeometryInputFixed() => false;
 
@@ -36,6 +41,15 @@ namespace Ryujinx.Graphics.Shader
         int[] QueryAmpereComputeC0Layout()
         {
             return null;
+        }
+
+        /// <summary>
+        /// NVN2 (Switch 2) graphics stages: the stage's own constant bank, c[25 + stage index], which holds the buffer entries the game pushes into graphics push block
+        /// 1 + stage index; the translator maps it onto that block of c[24] (AStageBlock). -1 for other shaders.
+        /// </summary>
+        int QueryAmpereStageBank()
+        {
+            return -1;
         }
 
         /// <summary>

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # The iOS launcher's settings for one game, from settings.tsv (its header describes the columns): the rows whose condition holds for the game, with the game's defaults, as JSON.
 # build_ipa.sh writes it into the app as dm/launcher.json; Launcher.swift draws the screen from it (an app without the file starts the game at once).
-# Usage: settings.py <game id> <rewritten modules dir> <control.nacp> <out.json>   (DM_GAMES_DIR finds provisional profiles, as in game.py; build:<VAR> defaults come from the environment;
+# Usage: settings.py <game id> <rewritten modules dir> <control.nacp> <out.json> [other rewritten module dirs...]   (DM_GAMES_DIR finds provisional profiles, as in game.py; build:<VAR> defaults come from the environment;
 #   GFXAPI is the packer's graphics API, SETTINGS_PLATFORM the app's platform: ios (default) or mac, whose launcher is the Mac front end)
 import json, os, re, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE)); sys.path.insert(0, str(HERE.parent / 'tools'))
-import game, nacp
+import game, nacp, nso_syms
 
 SECTIONS = ('Game', 'Controls', 'Performance')   # headings on the single settings screen
 SCHEMA = 1   # launcher.json's version (docs/launcher.schema.json); it grows only by optional fields, so a reader of 1 reads every 1
@@ -51,20 +51,22 @@ def rows():
         yield n, c + [''] * (9 - len(c))
 
 
-def fixups_keys(path):   # '# KEY<TAB>value' header rows of a rewriter table
-    if not path.is_file(): return set()
-    return {m[1] for m in re.finditer(r'^# (\w+)\t', path.read_text(encoding='utf-8'), re.M)}
+def fixups_keys(path):   # '# KEY<TAB>value' header rows of a rewriter table, as {KEY: value}
+    if not path.is_file(): return {}
+    return {m[1]: m[2].strip() for m in re.finditer(r'^# (\w+)\t(.*)$', path.read_text(encoding='utf-8'), re.M)}
 
 
 UNKNOWN_LANGUAGES = 'This game\'s files do not list its languages, so some of these may not be in the game. It may then show another one.'
 
 
-def build(gid, patched, control):
+def build(gid, patched, control, other_programs=()):
     platform = os.environ.get('SETTINGS_PLATFORM') or 'ios'
     if platform not in ('ios', 'mac'): sys.exit(f'SETTINGS_PLATFORM must be ios or mac: {platform}')
     g = game.load(gid)
     macros = dict(re.findall(r'^#define (DM_GAME_\w+) (.*)$', game.header_one(g), re.M))   # the host's own defaults, as it is compiled for this game
     keys = fixups_keys(Path(patched) / 'main.fixups.tsv')
+    mac_mic = platform == 'mac' and nso_syms.audio_input_capable(
+        p for folder in (patched, *other_programs) for p in Path(folder).glob('*.patched.bin'))
     have = nacp.languages(control)
     langs = [(c, n) for c, n in nacp.LANGUAGES if not have or c in have]   # no list (a dump or a NUP has no control data, none of its packages may): any language may be the game's, as DM_LANG and the NSP script's check take it
 
@@ -74,6 +76,7 @@ def build(gid, patched, control):
 
     def shown(cond, n):
         if cond == 'always': return True
+        if cond == 'mac-mic': return mac_mic
         if cond == 'languages>1': return len(langs) > 1
         if cond.startswith('fixups:'): return cond[7:] in keys
         if cond.startswith('gfxapi:'): return os.environ.get('GFXAPI', '') == cond[7:]
@@ -121,6 +124,8 @@ def build(gid, patched, control):
             if values == 'languages' and not have: s['note'] = UNKNOWN_LANGUAGES
         elif kind == 'range':
             lo, hi, st = (float(x) for x in values.split(':'))
+            if var == 'DM_RENDER_SCALE' and keys.get('RENDER_SCALE', '1') != '1':   # a stub that also raises the size: up to its largest scale (the rewriter's RENDER_SCALE, hex as every header value)
+                hi = float(int(keys['RENDER_SCALE'], 16))
             s.update(min=lo, max=hi, step=st)
         elif kind == 'toggle':
             if s['default'] not in ('0', '1'): sys.exit(f'settings.tsv:{n}: a toggle defaults to 0 or 1: {s["default"]}')
@@ -133,7 +138,7 @@ def build(gid, patched, control):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 5: sys.exit('usage: settings.py <game id> <rewritten modules dir> <control.nacp> <out.json>')
-    d = build(*sys.argv[1:4])
+    if len(sys.argv) < 5: sys.exit('usage: settings.py <game id> <rewritten modules dir> <control.nacp> <out.json> [other rewritten module dirs...]')
+    d = build(*sys.argv[1:4], other_programs=sys.argv[5:])
     Path(sys.argv[4]).write_text(json.dumps(d, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
     print(' '.join(s['env'] for s in d['settings']))

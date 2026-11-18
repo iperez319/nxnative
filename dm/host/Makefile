@@ -15,16 +15,22 @@ endif
 endif
 GAME_H = gen/$(GAME)/game_profile.h
 include ../mac/min_os.mk
-CFLAGS=-O1 -g -Wall -Wno-unused-function -mmacosx-version-min=$(MACOS_MIN)
+# -O2 as the other native code here (libvpx, dav1d, the launcher; the iOS host builds at Xcode Release's -Os). Not -O3 (no measured gain over -O2) and not -flto, which moves
+# hle_bigstack.c's inline-assembly entry apart from its return path (SIGBUS in dm_bigstack_enter on Breath of the Wild, PR #556)
+CFLAGS=-O2 -g -Wall -Wno-unused-function -mmacosx-version-min=$(MACOS_MIN)
+# One job per core unless the command line sets -j: the host and the libraries below build one object per source (GNU make 3.81, the system's, takes -j from MAKEFLAGS set here)
+ifeq ($(filter -j%,$(MAKEFLAGS)),)
+MAKEFLAGS += -j$(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
+endif
 # Service-layer takeover hle_*.c files are included by wildcard: adding a file does not touch this line (avoids merge conflicts)
-SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c ../apple/save_archive.m ../apple/save_sync.m memstat.m haptics_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S
+SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m audio_input.c audio_input_mac.m pad_switch2_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S
+SRC += ../apple/save_archive.m ../apple/save_sync.m
 SRC += $(sort $(wildcard ../apple/controller/*.m ../apple/controller/*.c ../apple/controller_host/*.m)) phone_controller_mac.m
 SRC += ../apple/shield_guide.m ../apple/shield_guide_save.m shield_guide_mac.m
 CFLAGS += -I. -I../apple/controller -I../apple/controller_host
 # NVN null device + nn::vi + the Vulkan layer (dm/gfx/)
 # Sources under dm/gfx, dm/gfx/nvn, dm/gfx/tex, dm/gfx/vk and dm/gfx/gl are included by wildcard (tests/ and metal/ do not go into the host): adding a file does not touch this line
 GFX=$(sort $(wildcard ../gfx/*.c ../gfx/nvn/*.c ../gfx/nvn/*.m ../gfx/nvn/*.S ../gfx/tex/*.c ../gfx/tex/*.m ../gfx/vk/*.m ../gfx/gl/*.m))
-GFX_H=$(sort $(wildcard ../gfx/nvn/*.h ../gfx/nvn/*.inc ../gfx/nvn/include/*.h ../gfx/tex/*.h))   # *.inc: nvn_mtl.m includes them (nvn_geometry.inc); an edit there alone used not to rebuild the host
 # Third party: libvpx ships the VP8 and VP9 decoder sources (movie decoding, hle_movie.c), with its configuration headers in config/ (arm64, shared by Mac and iOS). Built separately into a static library, file by file, so host changes do not recompile it
 VPX=../third_party/libvpx
 VPX_SRC=$(sort $(shell find $(VPX) -name '*.c'))
@@ -66,21 +72,40 @@ game_profile: $(GAME_H)
 # Regenerated on every make (FORCE): the same GAME can come from another profile folder (DM_GAMES_FIRST), whose game.tsv may be older than the header; game.py writes it only when it changes
 $(GAME_H): $(GAME_DIR)/game.tsv ../games/game.py FORCE
 	@python3 ../games/game.py header $(GAME) $@
-# Records which game the host was built for: changing GAME changes the stamp's content and rebuilds the host (otherwise make sees dmhost as newer than both headers and keeps the other game's host).
-# The game of the last build is also read when the Makefile is parsed, and a different one forces the link: make compares whole seconds, and a stamp written in the same second as
-# another game's dmhost (two builds in a row) did not count as newer, so that game's host was kept
-GAME_STAMP = gen/game.stamp
-$(GAME_STAMP): FORCE
-	@mkdir -p gen; echo $(GAME) | cmp -s - $@ || echo $(GAME) > $@
-ifneq ($(strip $(GAME)),)
-ifneq ($(shell cat $(GAME_STAMP) 2>/dev/null),$(GAME))
-dmhost: FORCE
-endif
-endif
 .PHONY: FORCE
 FORCE:
-dmhost: $(SRC) shield_guide_reference_mac.inc ../apple/shield_guide_reference.inc $(wildcard ../apple/controller/*.h ../apple/controller_host/*.h) ../apple/shield_guide.h ../apple/shield_guide_card_backgrounds.h ../apple/shield_guide_boutique_stock.inc ../apple/shield_guide_tms.inc ../apple/shield_guide_trs.inc ../apple/shield_guide_fossils.h ../apple/shield_guide_gyms.h ../apple/shield_guide_league_cards.h ../apple/shield_guide_postgame.h ../apple/shield_guide_uniforms.h ../apple/shield_guide_save.h ../apple/shield_guide_live.h ../apple/shield_guide_pickup_flags.inc ../apple/shield_guide_hidden_items.inc ../apple/shield_guide_wild_sparkles.inc ../apple/shield_guide_sparkle_map.inc ../apple/shield_guide_sparkle_positions.inc ../apple/shield_guide_galar_dex.inc ../games/01008DB008C2C000/guide_live_profile.h ../apple/shield_guide_chapters.inc ../apple/shield_guide_placements.inc ../apple/shield_guide_encounters.inc ../apple/shield_guide_wild.inc ../apple/shield_guide_wild_data.inc ../apple/shield_guide_wanderer_data.inc ../apple/shield_guide_raid_data.inc ../apple/shield_guide_raid_map.inc $(GFX) ../third_party/stb_vorbis/stb_vorbis.c dm.h hle.h romfs_image.h save_sync.h dm_input.h pad_slots.h hle_haptics.h haptics_apple.h motion_fusion.h motion_apple.h motion_pro.h motion_pro_mac.h pad_apple.h pad_hid.h pad_hid_mac.h home_quit.h home_quit_mac.h ctrl_prompt.h front.h $(GFX_H) $(GAME_H) $(GAME_STAMP) $(VPX_LIB) $(DAV1D_LIB) $(MSL_H)
-	clang $(CFLAGS) -I../gfx/nvn/include -I$(dir $(MSL_H)) -I../third_party/vulkan-headers/include -I$(dir $(GAME_H)) -I$(VPX) -I$(DAV1D)/include -I../third_party/stb_vorbis -fobjc-arc -o $@ $(SRC) $(GFX) $(VPX_LIB) $(DAV1D_LIB) -lz -framework Network -framework CoreBluetooth -framework CoreImage -framework CoreText -framework Security -framework Cocoa -framework WebKit -framework UserNotifications -framework QuartzCore -framework Metal -framework MetalFX -framework GameController -framework CoreHaptics -framework IOKit -framework AudioToolbox -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework ImageIO -framework UniformTypeIdentifiers
-clean:   # the host and everything make generates for it (gen/: the profile headers, the game stamp and the libvpx and dav1d builds; dmhost_* and *.dSYM beside them, as in .gitignore)
+# The host: one object per source in gen/<id>/obj (dm.h includes the profile header, so every game has its own), compiled on every core, then linked into gen/<id>/dmhost with
+# the same flags (as clang's one-step compile and link gives each of its jobs the whole line) and its dSYM made from the objects, as clang does after its own link. Each object
+# lists the headers its source read (-MMD; -MP: a removed header is no error), so an edit rebuilds the objects that include it and the link; the Makefile (CFLAGS, these lines)
+# rebuilds them all. The generated headers come first (order-only: the dependency files name them for the sources that read them). The NSP script builds gen/<id>/dmhost and takes it
+HOST_CFLAGS = $(CFLAGS) -I../gfx/nvn/include -I$(dir $(MSL_H)) -I../third_party/vulkan-headers/include -I$(dir $(GAME_H)) -I$(VPX) -I$(DAV1D)/include -I../third_party/stb_vorbis -fobjc-arc
+HOST_FRAMEWORKS = -lz -framework Network -framework CoreImage -framework CoreText -framework Security -framework Cocoa -framework WebKit -framework UserNotifications -framework QuartzCore -framework Metal -framework MetalFX -framework GameController -framework CoreBluetooth -framework IOBluetooth -framework CoreHaptics -framework IOKit -framework AudioToolbox -framework CoreAudio -framework AVFAudio -framework CoreFoundation -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework ImageIO -framework UniformTypeIdentifiers
+HOST_SRC = $(SRC) $(GFX)
+ifneq ($(filter ../%,$(filter-out ../gfx/% ../apple/%,$(HOST_SRC))),)
+$(error host sources outside dm/host, dm/gfx and dm/apple need an object rule: $(filter ../%,$(filter-out ../gfx/% ../apple/%,$(HOST_SRC))))
+endif
+OBJ_DIR = gen/$(GAME)/obj
+HOST_OBJ = $(foreach s,$(HOST_SRC),$(if $(filter ../gfx/%,$(s)),$(OBJ_DIR)/gfx/$(s:../gfx/%=%).o,$(if $(filter ../apple/%,$(s)),$(OBJ_DIR)/apple/$(s:../apple/%=%).o,$(OBJ_DIR)/host/$(s).o)))   # the line's order: the link lays code out in it
+HOST_BIN = gen/$(GAME)/dmhost
+$(OBJ_DIR)/host/%.o: % Makefile ../mac/min_os.mk | $(GAME_H) $(MSL_H)
+	@mkdir -p $(dir $@)
+	clang $(HOST_CFLAGS) -MMD -MP -c $< -o $@
+$(OBJ_DIR)/gfx/%.o: ../gfx/% Makefile ../mac/min_os.mk | $(GAME_H) $(MSL_H)
+	@mkdir -p $(dir $@)
+	clang $(HOST_CFLAGS) -MMD -MP -c $< -o $@
+$(OBJ_DIR)/apple/%.o: ../apple/% Makefile ../mac/min_os.mk | $(GAME_H) $(MSL_H)
+	@mkdir -p $(dir $@)
+	clang $(HOST_CFLAGS) -MMD -MP -c $< -o $@
+$(HOST_BIN): $(HOST_OBJ) $(VPX_LIB) $(DAV1D_LIB) Makefile ../mac/min_os.mk
+	clang $(HOST_CFLAGS) -o $@ $(HOST_OBJ) $(VPX_LIB) $(DAV1D_LIB) $(HOST_FRAMEWORKS)
+	dsymutil $@
+ifneq ($(strip $(GAME)),)
+-include $(HOST_OBJ:.o=.d)
+endif
+# dm/host/dmhost (what the run commands, regress.py and CI start) is a copy of this game's gen/<id>/dmhost with its dSYM, made again whenever the two differ: another game's or
+# an older build's (make's whole-second times could not tell two games' builds in one second apart)
+dmhost: $(HOST_BIN) FORCE
+	@cmp -s $(HOST_BIN) $@ || { rm -rf $@ $@.dSYM && cp $(HOST_BIN) $@ && cp -R $(HOST_BIN).dSYM $@.dSYM; }
+clean:   # the host and everything make generates for it (gen/: the profile headers, each game's objects and host, and the libvpx and dav1d builds; dmhost_* and *.dSYM beside them, as in .gitignore)
 	rm -rf gen dmhost dmhost_* *.dSYM
 .PHONY: clean

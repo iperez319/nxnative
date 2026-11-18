@@ -27,11 +27,13 @@ There is no game-specific patch, and only v131072's build row: the base game, v0
 
 ## The picture
 
-Every 3D target is 768x432 from the first frame of the title to the tutorial: MetalFX stands in for DLSS at 768x432 to 768x432, the game's NDSR compute networks take that to 1536x864, and the result reaches the 3840x2160 swap chain, whose top-left 1920x1080 holds the picture. The game's own defaults give the reason for the figure, not the cause: `render.dynres_min_scale_x` is 0.5 and `max` 1.0, so 768x432 is the minimum of a 1536x864 base, at 6 to 11 ms of GPU time a frame on the M4 Pro. `gpu_timestamps segment` changes nothing. Whether a console stays there too is not known.
+Docked, every 3D target was 768x432 from the first frame of the title to the tutorial: MetalFX stands in for DLSS at 768x432 to 768x432, the game's NDSR compute networks take that to 1536x864, and the result reaches the 3840x2160 swap chain, whose top-left 1920x1080 holds the picture. The game's own defaults give the reason for the figure, not the cause: `render.dynres_min_scale_x` is 0.5 and `max` 1.0, so 768x432 is the minimum of a 1536x864 base, at 6 to 11 ms of GPU time a frame on the M4 Pro. Segment timestamps (the profile key `gpu_timestamps segment` then, the host's default since) changed nothing, with the GPU's idle gaps still counted. Resolved, the cause of the docked size: the host answered graphics scale tier 1 docked, and the game renders 0.8 times smaller below tier 0 (byte +0xa of its mode event, `main+0xba69970`): 768x432 for its 1920x1080 window where tier 0 gives 960x540, its handheld size. The host now answers tier 0 in both modes ([The graphics scale does not follow the operation mode](../../../docs/reference/services.md#the-graphics-scale-does-not-follow-the-operation-mode)). Peppy's close-up 65 s into the intro has a mean luminance gradient (x1000 at 1080p) of 5.8 in console footage, 5.3 with tier 0 and 4.6 with tier 1. The sizes and gradients were measured on a build of the PR author's fork, not on `main`. Whether a console renders above 960x540 is not known.
 
 ## Driving it on the Mac
 
 `python3 scripts/build_ipa_from_nsp.py <folder> --platform mac` builds the Mac shaders and the host and prints the run command. Headless, through `DM_CTL`: the title is up about 40 s after boot and `A` starts the game. The prologue cinematic follows, about 4 minutes on every run (a save holds no progress yet, and skipping it was not tried), then the tutorial's first question, about 300 s after boot: `LDown`, `A` answers no. Shots of the swap chain hold the picture in their top-left quarter. A `shot` takes about 165 ms: a hitch every few seconds in a run that takes them is the shot's.
+
+DLSS alpha control (2026-11-17, M6, macOS 27.2, Xcode 27.2): a fresh save, `DM_KEYS=30:A`, 75 seconds, screenshots at 60 and 68 seconds. The title only creates and resizes the network on this build; the prologue evaluates MetalFX at 960x540 to 960x540, sRGB RGBA8 colour into RGBA16F with an R8 reactive mask. This exposed the [alpha pass taking the original builder's size](../../../docs/reference/rendering.md#metalfxs-dlss-stand-in-preserves-alpha). With its extent matched to RGB, the candidate reached frame 3042 with no new red-line kinds and both screenshots within the harness thresholds against main `233e68b8`. The harness reports PASS with a known baseline issue: profile depth `gl` disagrees with observed `zero`, so this is not clean archive/profile validation. Both runs were marked busy; their frame-time numbers are not a performance comparison. The temporary regression route was not retained.
 
 ## Found on this game
 
@@ -39,7 +41,11 @@ Every 3D target is 768x432 from the first frame of the title to the tutorial: Me
 - [SDK 21's OutputStream on a virtual output device](../../../docs/reference/audio.md#sdk-21s-outputstream-on-a-virtual-output-device) and [SDK 21's hardware Opus decoder manager](../../../docs/reference/audio.md#sdk-21s-hardware-opus-decoder-manager): its voice and music.
 - [GameChat queries from the title screen (SDK 21)](../../../docs/reference/services.md#gamechat-queries-from-the-title-screen-sdk-21): a null read in `nn::chat::GetChattingUid`.
 - [The camera commands of SDK 21's own camera module](../../../docs/reference/services.md#the-camera-commands-of-sdk-21s-own-camera-module): the game's own camera module, a console with no camera plugged in.
+- [sRGB textures loaded and stored raw through an image](../../../docs/reference/rendering.md#srgb-textures-loaded-and-stored-raw-through-an-image): the pale picture with grey blacks (the upscaler network's encoded store was encoded again); measured on a build of our fork, not on `main`.
+- [A GPU copy into a texture uploaded from its storage uploaded all of it again](../../../docs/reference/nvn-objects.md#a-gpu-copy-into-a-texture-uploaded-from-its-storage-uploaded-all-of-it-again): 7.6 s and 10 s frames at the prologue's scene changes; measured on a build of our fork, not on `main`.
+- [The graphics scale does not follow the operation mode](../../../docs/reference/services.md#the-graphics-scale-does-not-follow-the-operation-mode): the 768x432 scene docked; measured on a build of the PR author's fork, not on `main`.
 - [The DLSS network resized](../../../docs/reference/rendering.md#the-dlss-network-resized): `nvnDlssNetworkResize`.
+- [NVN2's DLSS on MetalFX](../../../docs/reference/rendering.md#nvn2s-dlss-on-metalfx): its DLSS bias mask, which only a red line reported, reaches MetalFX as its reactive mask. Resolved; no visible change in the prologue. DLSS here is 960x540 to 960x540, and the mask (R8, 0 or 255) marks a band at the top and the bottom of the cinematic's frame and the near cockpit edges that cross it, never the characters: the fur trails pull request #1904 put down to the mask were not seen with or without it.
 - [TXD through a uniform register kept no handle](../../../docs/reference/shaders.md#txd-through-a-uniform-register-kept-no-handle): 281 pixel shaders, the fur shells among them.
 - [A handle pair ORed sampler word first](../../../docs/reference/shaders.md#a-handle-pair-ored-sampler-word-first): 62 pixel shaders.
 - [NVN2 compute's separate handles in c\[0\]](../../../docs/reference/shaders.md#nvn2-computes-separate-handles-in-c0): `1002069a331ceded`, dispatched in the prologue.
@@ -49,8 +55,7 @@ Every 3D target is 768x432 from the first frame of the title to the tutorial: Me
 
 ## Open
 
-- [The picture](#the-picture): why the 3D stays at 768x432.
-- `[RED] DLSS: the game's bias mask (a reactive mask for MetalFX) is not passed on`.
+- [The picture](#the-picture): the 3D stayed at 768x432 docked because the host answered graphics scale tier 1 there; the host now answers tier 0, which gives 960x540 (measured on a build of the PR author's fork, not on `main`). Whether a console renders above that is not known.
 - The game's wake-up eventfd fails (the host refuses `nn::socket::EventFd`), so its HTTP thread polls without a wake-up; harmless offline.
-- A `pso_manifest.tsv` has not been recorded; `render_cond` not tried; the later levels and combat, and iOS, not tested.
+- A `pso_manifest.tsv` has not been recorded; the later levels and combat, and iOS, not tested.
 - Mario Kart World 1.8.0 has not been run with the camera answers changed for this game.

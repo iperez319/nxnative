@@ -13,7 +13,7 @@ static inline void front_hud_env(void) {
 void front_run(void (*guest)(void));
 // The CAMetalLayer the graphics backend presents frames to (NULL when there is no window)
 void *front_metal_layer(void);
-// The highest refresh rate of the window's screen in Hz, 0 = not known (Mac front_mac.m; none on iOS, whose screens run at multiples of 60 Hz). Any thread
+// The highest refresh rate of the screen the game is shown on in Hz, 0 = not known (front_mac.m: the window's screen; front_ios.m: the game view's screen, 60 in Low Power Mode). Any thread
 int front_screen_max_fps(void);
 // The pixel size of the display the game is shown on: on the Mac the window's screen in its current mode (the main display before the window is up) (a scaled Retina mode's pixels), an iPhone's or iPad's screen (nativeBounds).
 // Returns 0 and leaves w, h alone when not known (no front end: graphics unit tests). Any thread
@@ -46,6 +46,14 @@ int front_text_input(const char *title, const char *sub, const char *guide, cons
 // prompt over the game while controllers join and the calling thread blocks until it closes. 1: done (A or Return with the minimum in, the maximum in, or nobody left to join);
 // 0: closed (B, Escape); -1 with no window: nothing shown, the caller answers as the player closing it
 int front_ctrl_support(int min, int max);
+
+// Account applet: choices are already filtered by the host's selection settings.
+// Return a displayed user's slot, FRONT_USER_CREATE, FRONT_USER_SKIP, or FRONT_USER_CANCEL.
+// Synchronous on the guest thread, native UI on the main thread. No window: cancel,
+// never infer a user from controllers. Creation/skip actions appear only when allowed.
+typedef struct { int slot, open; char nickname[33]; } front_user;
+enum { FRONT_USER_CANCEL = -1, FRONT_USER_CREATE = -2, FRONT_USER_SKIP = -3 };
+int front_user_select(const front_user *users, int count, int allow_create, int allow_skip);
 
 // Early start of host loading (main.c): reading the NSO / relocation / forced takeover / prefetch start are moved to a background thread, in parallel with the front end (UIKit launch chain, Metal view);
 // the dm_main / main called afterwards waits for it to finish. For call timing and preconditions see the comments in main.c (set DM_ROMFS and the other environment variables and the cwd first; arguments identical item by item to those of the later main).
@@ -87,7 +95,8 @@ void dm_web_message(const char *msg, size_t n);
 void dm_web_ended(uint32_t reason, const char *url);
 void dm_web_failed(const char *why);
 
-// The program an oe::ExecuteProgram recorded starts at the app's next start (the iOS app, DM_EXEC_OUT, hle_oe.c): called on the guest thread after the record is written and before the graceful exit. index = the
-// program, name = its profile's name. The iOS front end names it on screen for about 1.5 s and schedules a local notification that opens the app again, when the player allowed notifications; it returns when the
-// notification is scheduled. The default (hle_oe.c, weak) returns at once
+// The program an oe::ExecuteProgram or oe::RequestToRelaunchApplication recorded starts at the app's next start (the iOS app, DM_EXEC_OUT, hle_oe.c): called on the guest thread after the record is
+// written and before the graceful exit. index = the program, name = its profile's name. The iOS front end names it on screen for about 1.5 s and schedules a local notification that opens the app
+// again, when the player allowed notifications (else it asks on screen to open the app again); it returns when the notification is scheduled. With no DM_EXEC_OUT (an app of one program, which asks to start itself again) it asks the player on
+// screen to open the app again. The default (hle_oe.c, weak) returns at once
 void front_program_handoff(int index, const char *name);

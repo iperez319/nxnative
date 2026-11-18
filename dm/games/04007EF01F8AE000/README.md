@@ -14,7 +14,6 @@ A Switch 2 game: v131072, SDK 22.2.0 built for the Switch 2 (`Ounce`), NVN2 API 
 | `fps_max 120` | `game.tsv` | **Frame rate** offers 120 on the Mac: speed measured below; see [Frame rate](#frame-rate) |
 | `depth_mode zero` | `game.tsv` | the game selects near-zero NVN depth; offline pipeline bases must use the matching vertex entry. Without it the app's bundled archive (661.6 MB on an M1 Pro) was refused at every start and the Mac built 872 MB of bases of its own in the background |
 
-No `render_cond`: not tried, and nothing has called for it so far.
 
 ## Files
 
@@ -26,6 +25,8 @@ No `render_cond`: not tried, and nothing has called for it so far.
 
 All 16,888 translate (current). One shader has 10 texture handles the translator cannot resolve (`Failed to find handle source for bindless access of type "texture2D"`) and one logs `Invalid reduction type: F32FtzRn`; neither has been traced to anything visible (open).
 
+- **Resolved: duplicate representative labels (2026-11-17, [issue #2946](https://github.com/seedds/nxnative/issues/2946)).** Since `8d62601f` the split of the registered 1.0 (dump) files stopped at the shader split. A fresh full split keeps all 16,888 map rows with the same multiset of package, stage and key, and every key the profile registered; only 36 rows move, all in two `main` BNSH blocks. Five rows change at `0x2183000` and 31 at `0x218a000`. Overall, 6 change only their `#var` source label and 30 change their package index (16 of those with their label). Every other row, `shader_facts.tsv`, `shader_pairs.tsv` and `pso_pairs.tsv` (where the profile has one) are unchanged. The refreshed map is the split's, byte for byte, and passes the packer's strict comparison. The registered v131072 executable yields 96 embedded occurrences across 40 keys. The full control sections and code are byte-identical within all 22 duplicate-key groups. The PR author packed the registered build on an Apple M2 Pro with macOS 27.2.1 and Xcode 27.2, then let it boot into a 3D scene with no input. One sync wait timed out during loading in that run. Gameplay and iPhone validation remain open for this refresh. Shared mechanism: [The split shader tables differ from a game profile's](../../../docs/reference/packing.md#the-split-shader-tables-differ-from-a-game-profiles).
+
 ## Rendering
 
 - The battle map renders at 1024x576 and DLSS, on MetalFX here, takes it to 2048x1152 ([NVN2's DLSS on MetalFX](../../../docs/reference/rendering.md#nvn2s-dlss-on-metalfx)), which is scaled to the 3840x2160 window. The network's size follows the display ([The display's largest buffer](../../../docs/reference/services.md#the-displays-largest-buffer)).
@@ -33,6 +34,7 @@ All 16,888 translate (current). One shader has 10 texture handles the translator
 - Ambient occlusion is interleaved: depth into a 4-layer 512x288 array, four triangles picking the layer by primitive ID, then back together at 1024x576 ([`[[primitive_id]]` in a specialized Metal 4 pipeline](../../../docs/reference/rendering.md#primitive_id-in-a-specialized-metal-4-pipeline)).
 - The enemy's checkered look and the pale squares over the ground are in the published footage too: both are the game's.
 - Frame time: 33 ms with the window on screen at the game's own 30 fps (16.7 ms at `fps_target 60`, [Frame rate](#frame-rate)), and GPU about 12 ms. A covered window reads 80-180 ms, the host's display-link fallback (`front end: window covered`), which measures nothing.
+- Resolved: at Alcineus Bridge on an M1 Pro (macOS 27.2, 1080p output) the scene ran at 4.24 fps, the lighting pass 196.7 ms of a 236 ms frame, while its reads of a uniform buffer's handle table were marked through a null address ([Reads of a handle table marked through a null address](../../../docs/reference/shaders.md#reads-of-a-handle-table-marked-through-a-null-address)). PR #1738's host bitmap measured 56.1 fps and 2.35 ms there (on `bd979ce`, chain `3ee52af3ca18`); the chain change that replaced it was not run on an M1 Pro.
 
 ## Frame rate
 
@@ -54,17 +56,19 @@ Keyboard in a window: J K U I are A B X Y, WASD the left stick, Shift + arrows t
 
 - Nothing past the first map has been played on this build.
 - `stage 1 cb4 has no uniform buffer bound`, once a run, with no effect seen.
-- MetalFX's jitter sign and DLSS's bias mask are unchecked; the bias mask is only logged. No ghosting has been seen so far.
+- MetalFX's jitter sign is unchecked, and what this game's DLSS bias mask holds has not been looked at (it reaches MetalFX as its reactive mask: [NVN2's DLSS on MetalFX](../../../docs/reference/rendering.md#nvn2s-dlss-on-metalfx)). No ghosting has been seen so far.
 - An IPA: the 16 GB alias region is over iOS's limit, as for [Splatoon Raiders](../0400380020056000/README.md).
 - `dm/games/profile_guess.py` does not recognise the SDK's `Generic` version name.
 
 ## Found on this game
 
+- [The Switch 2's order inside a GOB](../../../docs/reference/nvn-objects.md#the-switch-2s-order-inside-a-gob): its native SDK 22.2.0 driver confirms the owning-device layout flag; its main initializes device flags `0x400` (offline evidence, not a gameplay retest).
 - [Scaled shared memory addresses](../../../docs/reference/shaders.md#scaled-shared-memory-addresses) and [IMAD.HI adds a register pair, and IMAD.X its carry](../../../docs/reference/shaders.md#imadhi-adds-a-register-pair-and-imadx-its-carry): the dark map.
 - [Pending clears land before a compute dispatch](../../../docs/reference/rendering.md#pending-clears-land-before-a-compute-dispatch): battles and scene changes blown white.
 - [NVN2 compute reads its workgroup counts at c0 + 4](../../../docs/reference/shaders.md#nvn2-compute-reads-its-workgroup-counts-at-c0--4).
 - [Texture handles of SDK 22's Ampere code](../../../docs/reference/shaders.md#texture-handles-of-sdk-22s-ampere-code): white units.
 - [A table of handles past the array's length](../../../docs/reference/shaders.md#a-table-of-handles-past-the-arrays-length): black characters.
+- [Reads of a handle table marked through a null address](../../../docs/reference/shaders.md#reads-of-a-handle-table-marked-through-a-null-address): 4 fps at Alcineus Bridge on an M1 Pro.
 - [`[[primitive_id]]` in a specialized Metal 4 pipeline](../../../docs/reference/rendering.md#primitive_id-in-a-specialized-metal-4-pipeline): the dot lattice over the ground.
 - [NVN2's DLSS on MetalFX](../../../docs/reference/rendering.md#nvn2s-dlss-on-metalfx).
 - [Bindless shaders taken as depth readers](../../../docs/reference/rendering.md#bindless-shaders-taken-as-depth-readers): the battle maps' decals split the G-buffer pass about 31 times a frame.

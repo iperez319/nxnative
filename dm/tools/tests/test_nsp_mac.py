@@ -138,7 +138,10 @@ class Nvn(Base):
             self.assertEqual(self.build(False), self.sh / 'ios')
         self.assertEqual(self.left(), [f'cache/b-{CHAIN}.img', f'ios/b-{CHAIN}.img', f'ios/b-{CHAIN}.key'])
         self.assertTrue(nsp.shader_lib.has_library(self.sh / 'ios' / f'b-{CHAIN}'))
-        self.assertEqual([m for m in said if m.startswith('removed old shader libraries')], ['removed old shader libraries b-157e1b96c8da, b-a78f966a7b38 (0.4 KB)'])
+        self.assertEqual([m for m in said if m.startswith('removed old shader libraries')], ['removed old shader libraries b-157e1b96c8da, b-a78f966a7b38 (0.4 KB) to obsolete/'])
+        moved = list((self.sh.parent / 'obsolete').iterdir())   # into this build's folder there, at their places in the build folder
+        self.assertEqual(len(moved), 1); self.assertTrue(nsp.STAMP.match(moved[0].name) and moved[0].name.endswith(' build'), moved[0].name)
+        self.assertTrue((moved[0] / 'shader/ios/b-157e1b96c8da').exists() and (moved[0] / 'shader/mac-b-a78f966a7b38.key').exists())
         self.stale(); said.clear()   # a reused build prunes too
         with mock.patch.object(nsp, 'say', said.append):
             self.build(False)
@@ -154,11 +157,11 @@ class Nvn(Base):
 
     def test_failed_prune_keeps_the_build(self):   # a folder that cannot be removed is a [RED] line; the others go and the build still returns its libraries
         self.stale()
-        real, said = nsp.rmtree, []
-        def stuck(p):
+        real, said = nsp.retire, []
+        def stuck(work, p):
             if p.name == 'b-157e1b96c8da' and p.parent.name == 'ios': raise PermissionError(13, 'Permission denied', str(p))
-            real(p)
-        with mock.patch.object(nsp, 'rmtree', stuck), mock.patch.object(nsp, 'say', said.append):
+            real(work, p)
+        with mock.patch.object(nsp, 'retire', stuck), mock.patch.object(nsp, 'say', said.append):
             self.assertEqual(self.build(False), self.sh / 'ios')
         self.assertEqual(self.left(), sorted([f'cache/b-{CHAIN}.img', 'ios/b-157e1b96c8da', f'ios/b-{CHAIN}.img', f'ios/b-{CHAIN}.key']))
         self.assertEqual(len([m for m in said if m.startswith('[RED] could not remove old shader libraries')]), 1)
@@ -215,11 +218,11 @@ class Nvn(Base):
             return types.SimpleNamespace(get=lambda k, d='': {'pso_mtl4': mtl4, 'pso_gpu': gpu}.get(k, d), table=lambda n: self.tmp / ('c1_full.tsv' if pairs else 'absent'))
         want = nsp.ios_wants_pulling
         self.build(True)   # the stand-in writes the file that stands for a game's shader pairs here
-        self.assertFalse(want(g(), 'none', False, {}))
+        self.assertTrue(want(g(), 'none', False, {}))   # the player can turn on Metal 4/prebuild on the device
         self.assertTrue(want(g(), 'none', True, {}))   # the Xcode copy phase takes them always
         self.assertTrue(want(g('on'), 'none', False, {})); self.assertFalse(want(g('on'), 'none', False, {'IOS_PULL': '0'})); self.assertTrue(want(g(), 'none', False, {'IOS_PULL': '1'}))
         self.assertTrue(want(g(pairs=True), 'g18p', False, {}))   # the archive is made of them
-        self.assertFalse(want(g(), 'g18p', False, {}))   # no pairs: build_ipa.sh makes no archive
+        self.assertTrue(want(g(), 'g18p', False, {}))   # no offline archive: runtime lists can still need pulling entries
         self.assertEqual(nsp.ios_gpus('', g()), 'none'); self.assertEqual(nsp.ios_gpus('', g('on')), 'g18p'); self.assertEqual(nsp.ios_gpus('', g('on', gpu='g18p g17p')), 'g18p,g17p'); self.assertEqual(nsp.ios_gpus('g16p', g()), 'g16p')
 
     def test_old_chain_images_go_too(self):
@@ -260,7 +263,7 @@ class Nvn(Base):
         self.assertEqual(seen, [False])
 
     def store(self):
-        s = nsp.shader_cache.Store(self.sh / 'cache/cas.db'); self.addCleanup(s.close)
+        s = nsp.shader_cache.Store(self.sh / f'cache/cas-{CHAIN}.db'); self.addCleanup(s.close)
         return s
 
     def entries(self):   # the shaders the cache holds, as the next build that runs would read them
@@ -283,6 +286,36 @@ class Nvn(Base):
         with mock.patch.object(nsp, 'say', said.append): self.build(False)
         self.assertEqual(self.ran, []); self.assertNotIn(OLD, self.entries()); self.assertIn(NEW, self.entries())
 
+    def test_older_compile_caches_go_with_a_build(self):   # other chains' files and the one file from before generations, once this chain has its own; a failed build keeps them
+        old = nsp.shader_cache.Store(self.sh / 'cache/cas.db'); old.put('metallib/ios/i.metallib', b'ios'); old.close()
+        other = nsp.shader_cache.Store(self.sh / 'cache/cas-fedcba987654.db'); other.put('metallib/mac/m.metallib', b'mac'); other.close()
+        self.build(False)
+        self.assertTrue((self.sh / 'cache/cas.db').exists())   # the chain has no file of its own yet
+        self.store().put('metallib/mac/a.metallib', b'a')
+        (self.sh / 'ios' / f'b-{CHAIN}.key').unlink()   # not reused: the step runs, and fails
+        def failing(cmd, log, env=None, cwd=None, on_line=None): raise nsp.BuildError('translator failed')
+        with mock.patch.object(nsp, 'run', failing), self.assertRaises(nsp.BuildError): self.build(False)
+        self.assertTrue((self.sh / 'cache/cas-fedcba987654.db').exists())
+        said = []
+        with mock.patch.object(nsp, 'say', said.append): self.build(False)
+        self.assertEqual(sorted(p.name for p in (self.sh / 'cache').glob('cas*.db')), [f'cas-{CHAIN}.db'])
+        self.assertEqual(self.store().get('metallib/ios/i.metallib'), b'ios')
+        self.assertTrue(any(m.startswith('removed old shader compile caches ') and m.endswith(' to obsolete/') for m in said), said)
+        self.assertEqual(sorted(p.name for p in (self.sh.parent / 'obsolete').glob('* build/shader/cache/cas*.db')), ['cas-fedcba987654.db', 'cas.db'])
+
+    def test_obsolete_emptied_by_the_next_successful_build(self):   # what earlier builds and runs moved there goes; what this build moved stays, and one line says how much
+        ob = self.sh.parent / 'obsolete'
+        for name in ('2026-01-02 030405 build', '2026-01-02 030406 pso_archive', 'loose file'):
+            (ob / name).mkdir(parents=True); (ob / name / 'x').write_bytes(b'x' * 10)
+        (ob / '2026-02-01 000000 build').mkdir(); (ob / '2026-02-01 000000 build' / 'y').write_bytes(b'y' * 2048)
+        said = []
+        with mock.patch.object(nsp, 'BUILD_STARTED', '2026-02-01 000000'), mock.patch.object(nsp, 'say', said.append): nsp.empty_obsolete(self.sh.parent)
+        self.assertEqual([p.name for p in ob.iterdir()], ['2026-02-01 000000 build'])
+        self.assertEqual(said, [f'no longer used: 2.0 KB in {ob}, removed after the next successful build (deleting the folder now costs nothing)'])
+        said.clear()
+        with mock.patch.object(nsp, 'BUILD_STARTED', '2026-03-01 000000'), mock.patch.object(nsp, 'say', said.append): nsp.empty_obsolete(self.sh.parent)
+        self.assertFalse(ob.exists()); self.assertEqual(said, [])
+
     def test_prune_shader_cache_needs_success_and_the_list(self):   # a failed build, or libraries from before the list, keep every entry
         self.build(False); self.cas(OLD)
         (self.sh / 'ios' / f'b-{CHAIN}.key').unlink()   # not reused: the step runs, and fails
@@ -304,6 +337,10 @@ class Nvn(Base):
         self.build(True)
         (self.tmp / 'cb_extent.tsv').write_text(f'# chain b-{CHAIN} inputs bbbbbbbbbbbb 2026-10-23T00:00:00+00:00\n')
         self.assertEqual(self.build(True), self.sh / 'cache'); self.assertEqual([Path(c[1]).name for c, _ in self.ran], ['cb_extent.py'])
+
+    def test_the_build_hands_the_table_memo(self):   # c1_guard.py / cb_extent.py keep their answers in the shader cache (DMSH_TABLE_MEMO)
+        self.build(True)
+        self.assertEqual(self.ran[0][1]['DMSH_TABLE_MEMO'], str(self.sh / 'cache'))
 
     def test_split_pairs_invalidate_shader_reuse(self):
         # A registered profile may have no pso_pairs.tsv: the split's copy feeds vs_pad.

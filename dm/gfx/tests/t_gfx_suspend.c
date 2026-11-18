@@ -14,7 +14,6 @@ static int observed_mutex_lock(pthread_mutex_t *mutex);
 #define mtl_sub_commit test_sub_commit
 #define mtl_queue_activate test_queue_activate
 #define mtl_set_queue_origin_lower_left test_queue_origin
-#define mtl_sub_index test_sub_index
 #define mtl_exec_rest test_exec_rest
 #define mtl_exec test_exec
 #define mtl_set_frame test_set_frame
@@ -26,7 +25,6 @@ static int observed_mutex_lock(pthread_mutex_t *mutex);
 #undef mtl_sub_commit
 #undef mtl_queue_activate
 #undef mtl_set_queue_origin_lower_left
-#undef mtl_sub_index
 #undef mtl_exec_rest
 #undef mtl_exec
 #undef mtl_set_frame
@@ -36,7 +34,7 @@ module_t *g_mod; int g_nmod;
 void *front_metal_layer(void) { return NULL; }
 module_t *module_of(const void *p) { (void)p; return NULL; }
 void svc_thread_dump(void) {}
-uint64_t now_ns(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (uint64_t)t.tv_sec * 1000000000ull + t.tv_nsec; }
+uint64_t now_ns(void) { return clock_gettime_nsec_np(CLOCK_UPTIME_RAW); }   // the host's clock (hle_os.c: Mach absolute time), which Metal's timestamps are on
 
 static dispatch_semaphore_t preparing, second_waiting, finish_prepare, prepared, suspended, returned, committed;
 static __thread int second_submit;
@@ -64,17 +62,18 @@ void test_sub_begin(void) {}
 uint64_t test_sub_commit(void) { atomic_fetch_add(&commits, 1); dispatch_semaphore_signal(committed); return 0; }
 void test_queue_activate(uint64_t serial) { (void)serial; }
 void test_queue_origin(int on) { (void)on; }
-void test_sub_index(const uint64_t *handles, int count) { (void)handles; (void)count; }
 void test_exec_rest(const uint64_t *handles, int count) { (void)handles; (void)count; }
 void test_exec(const uint8_t *commands) { (void)commands; }
 void test_set_frame(uint64_t frame) { (void)frame; }
 void test_drain(void) { atomic_fetch_add(&drains, 1); }
 
 static NVNqueue queues[2];
-static const op_hdr work[] = {{OP_BEGIN, 8}, {OP_END, 8}};
+static const op_hdr work[] __attribute__((aligned(8))) = {{OP_BEGIN, 8}};
+static uint64_t work_list;   // its control list: one piece (nvn_obj.h ctl_e)
 static void *submit(void *which) {
     second_submit = which != NULL;
-    NVNcommandHandle handle = (uintptr_t)work;
+    work_list = ctl_e(CTL_CHUNK, work, sizeof work) | CTL_LAST;
+    NVNcommandHandle handle = (uintptr_t)&work_list;
     h_nvnQueueSubmitCommands(&queues[second_submit], 1, &handle);
     dispatch_semaphore_signal(returned);
     return NULL;
@@ -127,10 +126,11 @@ int main(void) {
     // An unencoded wait must not make suspend wait for a future producer.
     // Releasing that event in the background must still respect the closed gate.
     _Atomic uint32_t word = 0;
-    struct { op_hdr wait; volatile uint32_t *word; uint32_t mode, value; op_hdr begin, end; } parked = {
-        {OP_WAIT_EVENT, 24}, (volatile uint32_t *)&word, 0, 1, {OP_BEGIN, 8}, {OP_END, 8}
+    struct { op_hdr wait; volatile uint32_t *word; uint32_t mode, value; op_hdr begin; } parked __attribute__((aligned(8))) = {
+        {OP_WAIT_EVENT, 24}, (volatile uint32_t *)&word, 0, 1, {OP_BEGIN, 8}
     };
-    NVNcommandHandle parked_handle = (uintptr_t)&parked;
+    static uint64_t parked_list; parked_list = ctl_e(CTL_CHUNK, &parked, sizeof parked) | CTL_LAST;
+    NVNcommandHandle parked_handle = (uintptr_t)&parked_list;
     h_nvnQueueSubmitCommands(&queues[0], 1, &parked_handle);
     pthread_create(&background, NULL, suspend_graphics, NULL);
     if (!reached(suspended, "suspend returns with an unresolved queue event")) return 1;
