@@ -16,15 +16,21 @@
 #include "save_sync.h"
 #import "CloudSaves.h"
 
-void dm_gamepad_active(void);
 #import "DmLayout.h"
 #import "DmGameMenu.h"
+#import "../../apple/controller_host/DMControllerHost.h"
+#include "dm_input.h"
+UIViewController *dm_phone_controller_view(void);
 
+void dm_gamepad_host_ui(BOOL open);
+void dm_gamepad_active(BOOL active);
+UIViewController *dm_gamepad_settings(void);
 void front_ios_boot(void);
 int front_ios_boot_ok(void);
 const char *front_ios_boot_message(void);   // main.m: why a build that keeps the game files off the IPA found none usable (NULL = the generic hint)
 const char *front_ios_device_check(void);   // main.m: why this device cannot run the games (its GPU has no BC textures; NULL = supported); makes the first Metal device
 bool dm_show_launcher(void *view_controller, void (*done)(void));   // Launcher.swift: false = no launcher (no dm/launcher.json, or DM_LAUNCHER=0)
+void dm_show_save_screen(void *navigation_controller); // SaveUI.swift: live status and save actions
 
 static CAMetalLayer *g_layer;
 static void front_ios_notify_setup(void);
@@ -79,10 +85,125 @@ static void tv_attach(void);
 }
 @end
 
+// All host dialogs use this queue. A single child presentation is allowed on
+// the menu; requests wait for alert/picker dismissal instead of stacking alerts.
+static NSMutableArray *hostPresentations;
+static NSTimer *hostPresentationTimer;
+static BOOL hostInputBlocked;
+static __weak UIViewController *hostRoot;
+static BOOL hostMenuTracking;
+void dm_host_menu_tracking(BOOL open) {
+    hostMenuTracking = open;
+    dm_gamepad_host_ui(open || hostInputBlocked);
+    dm_input_remote_block(open || hostInputBlocked || UIApplication.sharedApplication.applicationState != UIApplicationStateActive);
+}
+void dm_phone_controller_show(void) {
+    UIViewController *parent = hostRoot;
+    while (parent.presentedViewController) parent = parent.presentedViewController;
+    UINavigationController *screen = [[UINavigationController alloc] initWithRootViewController:dm_phone_controller_view()];
+    screen.modalPresentationStyle = UIModalPresentationFullScreen;
+    dm_host_present((__bridge void *)parent, (__bridge void *)screen);
+}
+void dm_host_present(void *parent, void *controller) {
+    UIViewController *p = (__bridge UIViewController *)parent;
+    UIViewController *c = (__bridge UIViewController *)controller;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!hostPresentations) hostPresentations = [NSMutableArray array];
+        [hostPresentations addObject:@[p ?: hostRoot, c]];
+        if (!hostInputBlocked) { hostInputBlocked = YES; dm_gamepad_host_ui(YES); dm_input_remote_block(1); }
+        if (!hostPresentationTimer) hostPresentationTimer = [NSTimer scheduledTimerWithTimeInterval:0.05 repeats:YES block:^(NSTimer *timer) {
+            NSArray *next = hostPresentations.firstObject;
+            if (next) {
+                UIViewController *owner = next[0];
+                if (!owner.view.window && !owner.isBeingPresented) owner = hostRoot;
+                if (!owner.presentedViewController && !owner.isBeingDismissed && owner.view.window) {
+                    [owner presentViewController:next[1] animated:YES completion:nil];
+                    [hostPresentations removeObjectAtIndex:0];
+                }
+            }
+            BOOL blocked = hostPresentations.count || hostRoot.presentedViewController != nil;
+            if (blocked != hostInputBlocked) { hostInputBlocked = blocked; dm_host_menu_tracking(hostMenuTracking); }
+            if (!blocked) { [timer invalidate]; hostPresentationTimer = nil; }
+        }];
+    });
+}
+
+// These settings are sampled at startup by display/status and haptic code. Store
+// next-launch choices using the launcher's own schema/defaults and key names.
+@interface DmFeedbackSettings : UITableViewController
+@property NSArray<NSDictionary *> *settings;
+@property NSSet<NSString *> *locked;
+@end
+@implementation DmFeedbackSettings
+- (void)viewDidLoad {
+    [super viewDidLoad]; self.title=@"Feedback / display";
+    NSString *path=[NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"dm/launcher.json"];
+    NSData *data=[NSData dataWithContentsOfFile:path];
+    NSDictionary *file=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    NSMutableArray *rows=[NSMutableArray array];
+    const char *launcher=getenv("DM_LAUNCHER");
+    if (!launcher || atoi(launcher)) for (NSDictionary *setting in file[@"settings"])
+        if ([@[@"DM_TOUCH_HAPTICS",@"DM_RUMBLE",@"DM_SHOW_FPS",@"DM_SHOW_SAVE_STATUS"] containsObject:setting[@"env"]] && [setting[@"kind"] isEqual:@"toggle"]) [rows addObject:setting];
+    self.settings=rows;
+    NSString *keys=@(getenv("DM_ENV_FILE_KEYS") ?: ""); self.locked=[NSSet setWithArray:[keys componentsSeparatedByString:@" "]];
+}
+- (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section { return self.settings.count; }
+- (NSString *)tableView:(UITableView *)table titleForFooterInSection:(NSInteger)section {
+    return self.settings.count ? @"Applies next launch. The game keeps its current feedback and display settings until restarted. Values set by an environment file cannot be changed here." : @"Prelaunch settings are unavailable or disabled. Enable the launcher to change feedback and display choices.";
+}
+- (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)path {
+    NSDictionary *setting=self.settings[path.row]; NSString *env=setting[@"env"];
+    UITableViewCell *cell=[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+    cell.textLabel.text=setting[@"label"];
+    BOOL locked=[self.locked containsObject:env];
+    NSString *value=locked ? @(getenv(env.UTF8String) ?: "") : [NSUserDefaults.standardUserDefaults stringForKey:[@"launcher." stringByAppendingString:env]] ?: setting[@"default"];
+    UISwitch *toggle=[UISwitch new]; toggle.tag=path.row; toggle.enabled=!locked; toggle.on=[value isEqual:setting[@"on"] ?: @"1"];
+    [toggle addTarget:self action:@selector(changed:) forControlEvents:UIControlEventValueChanged]; cell.accessoryView=toggle;
+    cell.detailTextLabel.text=locked ? @"Set by an env file" : @"Applies next launch"; return cell;
+}
+- (void)changed:(UISwitch *)toggle {
+    NSDictionary *setting=self.settings[toggle.tag]; NSString *env=setting[@"env"];
+    if ([self.locked containsObject:env]) return;
+    NSString *value=toggle.on ? setting[@"on"] ?: @"1" : setting[@"off"] ?: @"0";
+    NSString *key=[@"launcher." stringByAppendingString:env];
+    if ([value isEqual:setting[@"default"]]) [NSUserDefaults.standardUserDefaults removeObjectForKey:key];
+    else [NSUserDefaults.standardUserDefaults setObject:value forKey:key];
+}
+@end
+
+@interface DmHostMenu : UITableViewController
+@end
+@implementation DmHostMenu
+- (void)viewDidLoad {
+    [super viewDidLoad]; self.title = @"Game menu";
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(close)];
+}
+- (void)close { [self dismissViewControllerAnimated:YES completion:nil]; }
+- (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section { return 5; }
+- (NSString *)tableView:(UITableView *)table titleForFooterInSection:(NSInteger)section { return @"The game keeps running. Opening this menu does not pause or save it. Controller gameplay input is suppressed until you close host UI."; }
+- (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)path {
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    cell.textLabel.text = @[@"Controls", @"Saves and backups", @"Feedback / display", @"Controllers → Connect iPhone", @"Help"][path.row]; cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator; return cell;
+}
+- (void)tableView:(UITableView *)table didSelectRowAtIndexPath:(NSIndexPath *)path {
+    [table deselectRowAtIndexPath:path animated:YES];
+    if (!path.row) { [self.navigationController pushViewController:dm_gamepad_settings() animated:YES]; return; }
+    if (path.row == 1) { dm_show_save_screen((__bridge void *)self.navigationController); return; }
+    if (path.row == 2) { [self.navigationController pushViewController:[[DmFeedbackSettings alloc] initWithStyle:UITableViewStyleInsetGrouped] animated:YES]; return; }
+    if (path.row == 3) { dm_phone_controller_show(); return; }
+    NSString *message = @"2D uses the left stick; D-pad-first uses directional buttons. In 3D, touch an empty part of the right third for the camera. Explicit buttons take priority. Tap sends touches to the game and requires handheld mode.\n\nSave in-game first. Backups and cloud uploads contain committed files, not unsaved gameplay or save states. Restore/import is available before launch only.";
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Help" message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    dm_host_present((__bridge void *)self.navigationController, (__bridge void *)alert);
+}
+@end
+
 @interface DmRootVC : UIViewController
 @property (nonatomic, strong) DmGameView *game;
 @property (nonatomic, strong) UIView *pad;
 @property (nonatomic, strong) UILabel *fps;
+@property (nonatomic, strong) UILabel *phoneNotice;
+@property (nonatomic) NSUInteger phoneNoticeGeneration;
 @property (nonatomic) BOOL launched;
 @property (nonatomic, strong) UIButton *syncButton;
 @property (nonatomic, strong) id tv;   // the TV scene accessory's registration (iOS 27)
@@ -93,13 +214,15 @@ static void tv_attach(void);
 #if __has_include(<UIKit/UIHingeInteraction.h>)
 - (void)hingeChanged:(UIHinge *)hinge API_AVAILABLE(ios(27.1));
 #endif
+@property (nonatomic, strong) UIActivityIndicatorView *syncActivity;
+@property (nonatomic) BOOL showSaveStatus;
 - (void)startGame;
 - (void)showFPS:(BOOL)on;
 @end
 static DmRootVC *g_root;
 static CGFloat g_picture_aspect = DM_PICTURE_16_9;   // the presented picture's width / height (front_picture_shape); main thread
 static void launcher_done(void) { [g_root startGame]; }
-static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, launcher_done)) [g_root startGame]; }
+static void sync_done(void) { [NSNotificationCenter.defaultCenter postNotificationName:@"DMSaveLauncherLaunch" object:nil]; }
 @implementation DmRootVC
 - (void)loadView { self.view = [DmRootView new]; }
 - (void)showHint:(NSString *)text {   // why the game cannot start, centered over the black screen
@@ -110,7 +233,8 @@ static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, lau
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = UIColor.blackColor;
+    self.view.backgroundColor = UIColor.blackColor; hostRoot = self;
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(phoneControllerChanged:) name:@"DMPhoneControllerOwnershipChanged" object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(syncForeground:) name:UIApplicationDidBecomeActiveNotification object:nil];
 #if __has_include(<UIKit/UIHingeInteraction.h>)
     if (@available(iOS 27.1, *)) {
@@ -120,6 +244,7 @@ static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, lau
         }]];
     }
 #endif
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(launcherReady:) name:@"DMSaveLauncherReady" object:nil];
     front_ios_power_watch();
     front_ios_notify_setup();
     if (!front_ios_boot_ok()) {   // No game files: show a hint and do not start the host
@@ -182,11 +307,47 @@ static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, lau
     UIApplication.sharedApplication.idleTimerDisabled = YES;
     UIButton *syncButton=[UIButton buttonWithType:UIButtonTypeSystem];
     self.syncButton=syncButton;
+    const char *saveStatus=getenv("DM_SHOW_SAVE_STATUS");
+    self.showSaveStatus=!saveStatus || atoi(saveStatus)!=0;
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(syncStatus:) name:@"DMSaveSyncStatus" object:nil];
-    syncButton.frame=CGRectMake(12,12,300,32); [syncButton setTitle:@"Cloud saves" forState:UIControlStateNormal];
+    // A small visible disc keeps the full 44-point touch target. No status text
+    // covers gameplay; VoiceOver and the menu retain the complete status.
+    UIView *disc=[[UIView alloc] initWithFrame:CGRectMake(7,7,30,30)];
+    disc.backgroundColor=[UIColor colorWithWhite:0 alpha:0.25]; disc.layer.cornerRadius=15; disc.userInteractionEnabled=NO;
+    [syncButton insertSubview:disc atIndex:0];
+    self.syncActivity=[[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
+    self.syncActivity.frame=CGRectMake(12,12,20,20); self.syncActivity.userInteractionEnabled=NO;
+    [syncButton addSubview:self.syncActivity];
+    syncButton.accessibilityLabel = @"Game menu";
+    syncButton.accessibilityHint = @"Opens controls, save status and backups";
+    [self updateSyncStatus:dm_sync_status_snapshot()];
     [syncButton addTarget:self action:@selector(cloudSaveMenu) forControlEvents:UIControlEventTouchUpInside]; [self.view addSubview:syncButton];
+    if (DMControllerHost.shared.connected) [self phoneControllerChanged:nil];
     tv_attach();   // a TV connected while the launcher showed
+    [self.view setNeedsLayout];
     front_ios_boot();
+    if (![NSUserDefaults.standardUserDefaults boolForKey:@"DmCameraHintSeen"]) {
+        UIAlertController *hint = [UIAlertController alertControllerWithTitle:@"Touch controls" message:@"In the 3D preset, touch an empty part of the right third to control the camera. Open Menu → Controls for D-pad-first, stick response and camera options. The game continues running." preferredStyle:UIAlertControllerStyleAlert];
+        [hint addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) { [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"DmCameraHintSeen"]; }]];
+        dm_host_present((__bridge void *)self, (__bridge void *)hint);
+    }
+}
+- (void)phoneControllerChanged:(NSNotification *)note {
+    if (!self.game) return;
+    if (!self.phoneNotice) {
+        self.phoneNotice = [UILabel new]; self.phoneNotice.translatesAutoresizingMaskIntoConstraints = NO;
+        self.phoneNotice.textAlignment = NSTextAlignmentCenter; self.phoneNotice.numberOfLines = 0;
+        self.phoneNotice.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+        self.phoneNotice.textColor = UIColor.whiteColor; self.phoneNotice.backgroundColor = [UIColor colorWithWhite:0 alpha:0.75];
+        self.phoneNotice.userInteractionEnabled = NO; [self.view addSubview:self.phoneNotice];
+        [NSLayoutConstraint activateConstraints:@[[self.phoneNotice.centerXAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerXAnchor],
+            [self.phoneNotice.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:48],
+            [self.phoneNotice.widthAnchor constraintLessThanOrEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor multiplier:0.8]]];
+    }
+    self.phoneNotice.text = DMControllerHost.shared.connected ? @"  iPhone controller connected — player 1  " : @"  iPhone disconnected — local controls restored  ";
+    self.phoneNotice.hidden = NO;
+    NSUInteger generation = ++self.phoneNoticeGeneration;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{ if (self.phoneNoticeGeneration == generation) self.phoneNotice.hidden = YES; });
 }
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
@@ -213,6 +374,9 @@ static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, lau
     if (![line isEqualToString:self.layoutLog]) { self.layoutLog = line; LOG("front end: layout %s", line.UTF8String); }
     self.pad.frame = b;
     dm_gamepad_arrange(self.pad, layout);
+    CGRect controlsSafe = CGRectIntersection(layout.controls, UIEdgeInsetsInsetRect(b, gameInsets));
+    CGFloat unit = layout.separated ? MIN(MIN(controlsSafe.size.height / 430.0, controlsSafe.size.width / 700.0), 1.3) : MIN(b.size.height / 430.0, 1.3);
+    self.syncButton.frame = CGRectMake(CGRectGetMidX(controlsSafe) + 108 * unit - 22, CGRectGetMinY(controlsSafe) + MAX(0, 22 * unit - 22), 44, 44);
     if (self.fps) {   // the top row's free stretch: right of DmGamepad.m's L3 key (102 + 17 of its units from the safe edge), level with − / + (22 units down); u is its unit
         CGRect s = CGRectIntersection(layout.controls, UIEdgeInsetsInsetRect(b, gameInsets));
         CGFloat u = layout.separated ? MIN(MIN(s.size.height / 430.0, s.size.width / 700.0), 1.3) : MIN(b.size.height / 430.0, 1.3);
@@ -232,12 +396,35 @@ static void sync_done(void) { if (!dm_show_launcher((__bridge void *)g_root, lau
     }
     if (self.launched || !front_ios_boot_ok() || UIApplication.sharedApplication.applicationState == UIApplicationStateBackground) return;
     self.launched = YES; g_root = self;
-    dm_sync_prelaunch((__bridge void *)self, sync_done); // before graphics resources and guest mounts
+    if (!dm_show_launcher((__bridge void *)self, launcher_done))
+        dm_sync_prelaunch((__bridge void *)self, launcher_done); // fallback when the settings launcher is disabled
     front_ios_notify_ask();
 }
+- (void)launcherReady:(NSNotification *)note { dm_sync_landing((__bridge void *)note.object, sync_done); }
 - (void)syncForeground:(NSNotification *)note { if (!self.launched) [self viewDidAppear:NO]; }
-- (void)syncStatus:(NSNotification *)note { [self.syncButton setTitle:[@"Cloud: " stringByAppendingString:note.object] forState:UIControlStateNormal]; }
-- (void)cloudSaveMenu { dm_sync_menu((__bridge void *)self); }
+- (void)syncStatus:(NSNotification *)note {
+    [self updateSyncStatus:note.object];
+}
+- (void)updateSyncStatus:(NSDictionary *)status {
+    NSString *operation=status[@"operation"];
+    BOOL busy=self.showSaveStatus && [operation isEqual:@"uploading"];
+    BOOL attention=self.showSaveStatus && [@[@"conflict",@"remoteAdvanced",@"recoveryRequired"] containsObject:operation ?: @""];
+    NSDictionary *symbols=@{@"uploaded":@"checkmark.icloud", @"offlinePaused":@"icloud.slash", @"pending":@"icloud.and.arrow.up"};
+    NSString *symbol=!self.showSaveStatus ? @"ellipsis" : attention ? @"exclamationmark.icloud" : symbols[operation ?: @""] ?: @"ellipsis";
+    UIImage *icon=busy ? nil : [UIImage systemImageNamed:symbol withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightMedium]];
+    [self.syncButton setImage:icon forState:UIControlStateNormal];
+    self.syncButton.tintColor=attention ? UIColor.systemOrangeColor : UIColor.whiteColor;
+    self.syncButton.alpha=attention || busy ? 0.9 : 0.5;
+    self.syncActivity.color=UIColor.whiteColor;
+    if (busy) [self.syncActivity startAnimating]; else [self.syncActivity stopAnimating];
+    self.syncButton.accessibilityValue=self.showSaveStatus ? status[@"label"] ?: @"Saved locally" : nil;
+}
+- (void)cloudSaveMenu {
+    if (self.presentedViewController || hostPresentations.count) return;
+    UINavigationController *menu = [[UINavigationController alloc] initWithRootViewController:[[DmHostMenu alloc] initWithStyle:UITableViewStyleInsetGrouped]];
+    menu.modalPresentationStyle = UIModalPresentationFullScreen;
+    dm_host_present((__bridge void *)self, (__bridge void *)menu);
+}
 - (BOOL)prefersHomeIndicatorAutoHidden { return YES; }
 - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures { return UIRectEdgeAll; }   // Edge gestures need two swipes, to avoid accidental exits
 - (BOOL)prefersStatusBarHidden { return YES; }
@@ -462,7 +649,7 @@ int front_text_input(const char *title, const char *sub, const char *guide, cons
         UIViewController *vc = nil;
         for (UIScene *s in UIApplication.sharedApplication.connectedScenes) if ([s isKindOfClass:UIWindowScene.class]) for (UIWindow *w in ((UIWindowScene *)s).windows) if (w.isKeyWindow) vc = w.rootViewController;
         if (!vc) { dispatch_semaphore_signal(done); return; }
-        [vc presentViewController:ac animated:YES completion:nil];
+        dm_host_present((__bridge void *)vc, (__bridge void *)ac);
     });
     // The guest clock keeps running meanwhile, as on the Switch (hle_swkbd.c): a freeze here as well stopped Octopath Traveler 0's frame loop for as long as the box was up and made its sound stutter
     // (4,977 ms and 2,577 ms frames, 5,181 wakeups a second). The inline keyboard freezes around its own call (hle_swkbd.c)
@@ -479,13 +666,12 @@ void front_save_failed(int err) {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIViewController *vc = nil;
         for (UIScene *s in UIApplication.sharedApplication.connectedScenes) if ([s isKindOfClass:UIWindowScene.class]) for (UIWindow *w in ((UIWindowScene *)s).windows) if (w.isKeyWindow) vc = w.rootViewController;
-        while (vc.presentedViewController) vc = vc.presentedViewController;
         if (!vc) { LOG("[RED] front end: no window for the save-failure alert errno=%d", err); return; }
         NSString *m = err == ENOSPC ? @"Storage is full, so progress was not saved. Free up space and save again."
                                     : [NSString stringWithFormat:@"Saving failed (errno %d); progress was not saved.", err];
         UIAlertController *a = [UIAlertController alertControllerWithTitle:@"Save failed" message:m preferredStyle:UIAlertControllerStyleAlert];
         [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-        [vc presentViewController:a animated:YES completion:nil];
+        dm_host_present((__bridge void *)vc, (__bridge void *)a);
     });
 }
 
@@ -543,13 +729,13 @@ static void save_sync_background(void) {
 void front_ios_focus_event(int ev) {
     if (!g_layer) return;
     switch (ev) {
-        case 0: dm_gamepad_reset(); dm_focus_set(2); break;
+        case 0: [DMControllerHost.shared stop:@"Receiver lost focus. Pair again to resume iPhone control."]; dm_input_remote_block(1); dm_gamepad_active(NO); dm_gamepad_reset(); dm_focus_set(2); break;
         case 1: dm_sync_tick(); UIApplication.sharedApplication.idleTimerDisabled = NO; dm_focus_set(3); g_audio_bg = 1; front_ios_audio_apply(); guest_clock_freeze_for(1, 1); dm_gfx_suspend(1); save_sync_background(); break;
         case 2: dm_gfx_suspend(0); guest_clock_freeze_for(1, 0); front_ios_audio_session(); g_audio_bg = 0; front_ios_audio_apply(); dm_focus_set(2); break;
         case 3:   // Becoming active again also ends an interruption whose "ended" never came (not every one sends it), and retries a session that would not activate on the way back
             UIApplication.sharedApplication.idleTimerDisabled = YES;
             if (g_audio_intr) { LOG("audio session: active again with no interruption-ended notice; resuming"); g_audio_intr = 0; g_session_off = 1; }
             if (g_session_off) front_ios_audio_session();
-            front_ios_audio_apply(); dm_gamepad_active(); dm_focus_set(1); break;
+            front_ios_audio_apply(); dm_gamepad_active(YES); dm_input_remote_block(hostInputBlocked || hostMenuTracking); dm_focus_set(1); break;
     }
 }

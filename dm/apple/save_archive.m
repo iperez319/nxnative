@@ -162,11 +162,13 @@ static void durableTree(NSString *dir) {
 + (void)restore:(NSString *)stage manifest:(NSDictionary *)m state:(NSString *)state save:(NSString *)save metadata:(NSDictionary *)metadata {
     NSString *backupName=[@"backup-" stringByAppendingString:NSUUID.UUID.UUIDString]; NSString *backup=[state stringByAppendingPathComponent:backupName];
     check([fm() createDirectoryAtPath:backup withIntermediateDirectories:NO attributes:nil error:nil],@"Cannot create backup"); NSMutableDictionary *roots=[NSMutableDictionary dictionary];
+    NSMutableArray *originalEntries=[NSMutableArray array]; NSUInteger originalSize=0;
     for (NSString *root in @[@"account",@"device"]) {
         NSString *target=[root isEqual:@"account"]?save:[save stringByAppendingString:@"_device"]; BOOL exists=[fm() fileExistsAtPath:target]; roots[root]=@(exists);
-        if (exists) check([fm() copyItemAtPath:target toPath:[backup stringByAppendingPathComponent:root] error:nil],@"Cannot preserve local save");
+        if (exists) { inventoryTree(target,@"",root,originalEntries,&originalSize); check([fm() copyItemAtPath:target toPath:[backup stringByAppendingPathComponent:root] error:nil],@"Cannot preserve local save"); }
     }
     durableTree(backup);
+    check([[self inventory:backup] isEqual:@{@"roots":roots,@"entries":originalEntries}], @"Recovery copy failed verification; local saves unchanged");
     NSString *stateFile=[state stringByAppendingPathComponent:@"state.json"];
     NSDictionary *old=[NSJSONSerialization JSONObjectWithData:([NSData dataWithContentsOfFile:stateFile]?:[NSData dataWithBytes:"{}" length:2]) options:0 error:nil];
     NSString *journal=[state stringByAppendingPathComponent:@"restore.json"];

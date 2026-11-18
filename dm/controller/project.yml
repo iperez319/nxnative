@@ -1,0 +1,79 @@
+name: NxController
+options:
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    CLANG_ENABLE_OBJC_ARC: YES
+    GCC_C_LANGUAGE_STANDARD: gnu11
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "11"
+    HEADER_SEARCH_PATHS:
+      - $(SRCROOT)/../apple/controller
+      - $(SRCROOT)/../ios/Sources
+      - $(SRCROOT)/../host
+targets:
+  NxController:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/main.m
+      - Sources/DMControllerViewController.m
+      - Sources/DMQRScanner.m
+      - ../ios/Sources/DmGamepad.m
+      - path: ../apple/controller
+        excludes: [tests]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: org.nxnative.controller
+      TARGETED_DEVICE_FAMILY: "1"
+      GCC_PREPROCESSOR_DEFINITIONS: $(inherited) DM_CONTROLLER_APP=1
+    info:
+      path: Generated/Controller-Info.plist
+      properties:
+        CFBundleDisplayName: nx Controller
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: DMControllerSceneDelegate
+        NSLocalNetworkUsageDescription: Find and connect to your nxnative game or input-test receiver without internet.
+        NSCameraUsageDescription: Scan the pairing QR on your iPad or Mac to connect without typing an invitation.
+        NSBluetoothAlwaysUsageDescription: Connect directly to your iPad or Mac over Bluetooth for experimental offline controller play.
+        NSBonjourServices: [_nxcontrol._tcp]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+  NxControllerReceiver:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/main.m
+      - Sources/DMReceiverViewController.m
+      - path: ../apple/controller
+        excludes: [tests]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: org.nxnative.controller.receiver-spike
+      TARGETED_DEVICE_FAMILY: "2"
+      GCC_PREPROCESSOR_DEFINITIONS: $(inherited) DM_CONTROLLER_RECEIVER=1
+    info:
+      path: Generated/Receiver-Info.plist
+      properties:
+        CFBundleDisplayName: nx Input Test
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: DMControllerSceneDelegate
+        NSLocalNetworkUsageDescription: Accept test controller input from your iPhone over local Wi-Fi without internet.
+        NSBluetoothAlwaysUsageDescription: Test receiving encrypted controller input directly from your iPhone over Bluetooth.
+        NSBonjourServices: [_nxcontrol._tcp]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]

@@ -1,0 +1,3485 @@
+{
+  "source": {
+    "title": "Official Sword/Shield Galar Region Strategy Guide",
+    "edition": "launch-era printed guide; interpreted for base Shield 1.3.2",
+    "ocrSHA256": "66d588d05953a27e817ce5fc63c4df1681e99d8995b3cc6ae3b26adb98a8fd73",
+    "citation": "printed pages and visible/hidden item sections on each row",
+    "method": "Read visible/hidden item lists, including OCR Visit Items in Stow-on-Side, nested Route 9/Rose Tower sections and the Route 1 table. Exclude the Sword-only Route 6 fossil row. Preserve duplicate printed placements; grouped pearls, Revives, powders and feather pools may share one activity key. Wild Area printed subarea mistakes use the existing native placement audit. This inventories readable pickup lists, not every map pin, gift, shop stock or encyclopedia row. Independently recount the 56 printed p. 28 side-event rows in 15 location groups and resolve the historical per-location key crosswalk, preserving multi-area/multi-step keys."
+  },
+  "pickups": [
+    {
+      "pages": "40–41",
+      "area": "Wedgehurst",
+      "section": "visible",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "wedgehurst.rare-candy"
+      ],
+      "id": "printed-pickup-001",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "40–41",
+      "area": "Wedgehurst",
+      "section": "visible",
+      "item": "Poké Doll",
+      "quantity": 1,
+      "keys": [
+        "wedgehurst.poke-doll"
+      ],
+      "id": "printed-pickup-002",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "40–41",
+      "area": "Wedgehurst",
+      "section": "hidden",
+      "item": "Revive",
+      "quantity": 1,
+      "keys": [
+        "wedgehurst.revive"
+      ],
+      "id": "printed-pickup-003",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "Potion",
+      "quantity": 2,
+      "keys": [
+        "route2.potion"
+      ],
+      "id": "printed-pickup-004",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "Poké Ball",
+      "quantity": 3,
+      "keys": [
+        "route2.balls"
+      ],
+      "id": "printed-pickup-005",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "Great Ball",
+      "quantity": 1,
+      "keys": [
+        "route2.great-ball"
+      ],
+      "id": "printed-pickup-006",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "TM57 Payback",
+      "quantity": 1,
+      "keys": [
+        "route2.payback"
+      ],
+      "id": "printed-pickup-007",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "Choice Band",
+      "quantity": 1,
+      "keys": [
+        "route2.choice-band"
+      ],
+      "id": "printed-pickup-008",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "PP Max",
+      "quantity": 1,
+      "keys": [
+        "route2.pp-max"
+      ],
+      "id": "printed-pickup-009",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "TM69 Psycho Cut",
+      "quantity": 1,
+      "keys": [
+        "route2.psycho-cut"
+      ],
+      "id": "printed-pickup-010",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "visible",
+      "item": "Psychic Seed",
+      "quantity": 1,
+      "keys": [
+        "route2.psychic-seed"
+      ],
+      "id": "printed-pickup-011",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Repel",
+      "quantity": 1,
+      "keys": [
+        "route2.repel"
+      ],
+      "id": "printed-pickup-012",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Fresh Water",
+      "quantity": 1,
+      "keys": [
+        "route2.fresh-water"
+      ],
+      "id": "printed-pickup-013",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "route2.rare-candy"
+      ],
+      "id": "printed-pickup-014",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Prism Scale",
+      "quantity": 1,
+      "keys": [
+        "route2.prism-scale"
+      ],
+      "id": "printed-pickup-015",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Max Ether",
+      "quantity": 1,
+      "keys": [
+        "route2.max-ether"
+      ],
+      "id": "printed-pickup-016",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "42–45",
+      "area": "Route 2",
+      "section": "hidden",
+      "item": "Water Stone",
+      "quantity": 1,
+      "keys": [
+        "route2.water-stone"
+      ],
+      "id": "printed-pickup-017",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "TM84 Tail Slap",
+      "quantity": 1,
+      "keys": [
+        "wild-area.tail-slap"
+      ],
+      "id": "printed-pickup-018",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "White Herb",
+      "quantity": 1,
+      "keys": [
+        "wild-area.white-herb"
+      ],
+      "id": "printed-pickup-019",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "wild-area.max-revive"
+      ],
+      "id": "printed-pickup-020",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "Thunder Stone",
+      "quantity": 1,
+      "keys": [
+        "wild-area.thunder-stone"
+      ],
+      "id": "printed-pickup-021",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "Leftovers",
+      "quantity": 1,
+      "keys": [
+        "wild-area.leftovers"
+      ],
+      "id": "printed-pickup-022",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "TM81 Bulldoze",
+      "quantity": 1,
+      "keys": [
+        "wild-area.bulldoze"
+      ],
+      "id": "printed-pickup-023",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "46–49",
+      "area": "South Wild Area",
+      "section": "visible",
+      "item": "TM95 Air Slash",
+      "quantity": 1,
+      "keys": [
+        "wild-area.air-slash"
+      ],
+      "id": "printed-pickup-024",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "visible",
+      "item": "Black Glasses",
+      "quantity": 1,
+      "keys": [
+        "motostoke.black-glasses"
+      ],
+      "id": "printed-pickup-025",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "visible",
+      "item": "Great Ball",
+      "quantity": 3,
+      "keys": [
+        "motostoke.great-balls"
+      ],
+      "id": "printed-pickup-026",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "visible",
+      "item": "Silk Scarf",
+      "quantity": 1,
+      "keys": [
+        "motostoke.silk-scarf"
+      ],
+      "id": "printed-pickup-027",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "visible",
+      "item": "TM02 Pay Day",
+      "quantity": 1,
+      "keys": [
+        "motostoke.pay-day"
+      ],
+      "id": "printed-pickup-028",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "visible",
+      "item": "Burn Heal",
+      "quantity": 3,
+      "keys": [
+        "motostoke.burn-heals"
+      ],
+      "id": "printed-pickup-029",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Poké Ball",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-poke-ball"
+      ],
+      "id": "printed-pickup-030",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Nugget",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-nugget"
+      ],
+      "id": "printed-pickup-031",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Revival Herb",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-revival-herb"
+      ],
+      "id": "printed-pickup-032",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Super Potion",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-super-potion"
+      ],
+      "id": "printed-pickup-033",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Paralyze Heal",
+      "quantity": 2,
+      "keys": [
+        "motostoke.hidden-paralyze-heals"
+      ],
+      "id": "printed-pickup-034",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Poké Doll",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-poke-doll"
+      ],
+      "id": "printed-pickup-035",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "X Accuracy",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-x-accuracy"
+      ],
+      "id": "printed-pickup-036",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "50–55",
+      "area": "Motostoke",
+      "section": "hidden",
+      "item": "Repel",
+      "quantity": 1,
+      "keys": [
+        "motostoke.hidden-repel"
+      ],
+      "id": "printed-pickup-037",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "visible",
+      "item": "Heal Ball",
+      "quantity": 3,
+      "keys": [
+        "route3.heal-balls"
+      ],
+      "id": "printed-pickup-038",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "visible",
+      "item": "TM37 Beat Up",
+      "quantity": 1,
+      "keys": [
+        "route3.beat-up"
+      ],
+      "id": "printed-pickup-039",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "visible",
+      "item": "Super Potion",
+      "quantity": 1,
+      "keys": [
+        "route3.super-potion"
+      ],
+      "id": "printed-pickup-040",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "visible",
+      "item": "TM54 Rock Blast",
+      "quantity": 1,
+      "keys": [
+        "route3.rock-blast"
+      ],
+      "id": "printed-pickup-041",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "hidden",
+      "item": "Big Mushroom",
+      "quantity": 1,
+      "keys": [
+        "route3.big-mushroom"
+      ],
+      "id": "printed-pickup-042",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "hidden",
+      "item": "Burn Heal",
+      "quantity": 1,
+      "keys": [
+        "route3.burn-heal"
+      ],
+      "id": "printed-pickup-043",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "hidden",
+      "item": "Revive",
+      "quantity": 1,
+      "keys": [
+        "route3.revive"
+      ],
+      "id": "printed-pickup-044",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "56–57",
+      "area": "Route 3",
+      "section": "hidden",
+      "item": "X Defense",
+      "quantity": 2,
+      "keys": [
+        "route3.x-defense"
+      ],
+      "id": "printed-pickup-045",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "visible",
+      "item": "Great Ball",
+      "quantity": 3,
+      "keys": [
+        "galar-mine.great-balls"
+      ],
+      "id": "printed-pickup-046",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "visible",
+      "item": "TM26 Scary Face",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.scary-face"
+      ],
+      "id": "printed-pickup-047",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "visible",
+      "item": "Heavy-Duty Boots",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.boots"
+      ],
+      "id": "printed-pickup-048",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "visible",
+      "item": "Super Potion",
+      "quantity": 2,
+      "keys": [
+        "galar-mine.super-potions"
+      ],
+      "id": "printed-pickup-049",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Star Piece",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.star-piece"
+      ],
+      "id": "printed-pickup-050",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Revive",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.revives"
+      ],
+      "id": "printed-pickup-051",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Stardust",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.stardust"
+      ],
+      "id": "printed-pickup-052",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Hard Stone",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.hard-stone"
+      ],
+      "id": "printed-pickup-053",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Ether",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.ether"
+      ],
+      "id": "printed-pickup-054",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Revive",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.revives"
+      ],
+      "id": "printed-pickup-055",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "58–59",
+      "area": "Galar Mine",
+      "section": "hidden",
+      "item": "Stardust",
+      "quantity": 1,
+      "keys": [
+        "galar-mine.stardust"
+      ],
+      "id": "printed-pickup-056",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "visible",
+      "item": "Cleanse Tag",
+      "quantity": 1,
+      "keys": [
+        "route4.cleanse-tag"
+      ],
+      "id": "printed-pickup-057",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "visible",
+      "item": "Nest Ball",
+      "quantity": 3,
+      "keys": [
+        "route4.nest-balls"
+      ],
+      "id": "printed-pickup-058",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "visible",
+      "item": "Sharp Beak",
+      "quantity": 1,
+      "keys": [
+        "route4.sharp-beak"
+      ],
+      "id": "printed-pickup-059",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "visible",
+      "item": "TM07 Pin Missile",
+      "quantity": 1,
+      "keys": [
+        "route4.pin-missile"
+      ],
+      "id": "printed-pickup-060",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "visible",
+      "item": "Silver Powder",
+      "quantity": 1,
+      "keys": [
+        "route4.silver-powder"
+      ],
+      "id": "printed-pickup-061",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Energy Powder",
+      "quantity": 1,
+      "keys": [
+        "route4.energy-powder"
+      ],
+      "id": "printed-pickup-062",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Ether",
+      "quantity": 1,
+      "keys": [
+        "route4.ether"
+      ],
+      "id": "printed-pickup-063",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Paralyze Heal",
+      "quantity": 1,
+      "keys": [
+        "route4.paralyze-heal"
+      ],
+      "id": "printed-pickup-064",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "route4.rare-candy"
+      ],
+      "id": "printed-pickup-065",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Energy Powder",
+      "quantity": 2,
+      "keys": [
+        "route4.energy-powder"
+      ],
+      "id": "printed-pickup-066",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Repel",
+      "quantity": 1,
+      "keys": [
+        "route4.repel"
+      ],
+      "id": "printed-pickup-067",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Paralyze Heal",
+      "quantity": 1,
+      "keys": [
+        "route4.paralyze-heal"
+      ],
+      "id": "printed-pickup-068",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Revival Herb",
+      "quantity": 1,
+      "keys": [
+        "route4.revival-herb"
+      ],
+      "id": "printed-pickup-069",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "X Accuracy",
+      "quantity": 2,
+      "keys": [
+        "route4.x-accuracy"
+      ],
+      "id": "printed-pickup-070",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "60–61",
+      "area": "Route 4",
+      "section": "hidden",
+      "item": "Energy Root",
+      "quantity": 1,
+      "keys": [
+        "route4.energy-root"
+      ],
+      "id": "printed-pickup-071",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "visible",
+      "item": "X Attack",
+      "quantity": 3,
+      "keys": [
+        "turffield.x-attacks"
+      ],
+      "id": "printed-pickup-072",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "turffield.max-revive"
+      ],
+      "id": "printed-pickup-073",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "visible",
+      "item": "TM97 Brutal Swing",
+      "quantity": 1,
+      "keys": [
+        "turffield.brutal-swing"
+      ],
+      "id": "printed-pickup-074",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "visible",
+      "item": "TM11 Solar Beam",
+      "quantity": 1,
+      "keys": [
+        "turffield.solar-beam"
+      ],
+      "id": "printed-pickup-075",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "hidden",
+      "item": "Leaf Stone",
+      "quantity": 1,
+      "keys": [
+        "turffield.leaf-stone"
+      ],
+      "id": "printed-pickup-076",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "hidden",
+      "item": "Fresh Water",
+      "quantity": 1,
+      "keys": [
+        "turffield.fresh-water"
+      ],
+      "id": "printed-pickup-077",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "hidden",
+      "item": "Energy Root",
+      "quantity": 1,
+      "keys": [
+        "turffield.energy-root"
+      ],
+      "id": "printed-pickup-078",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "62–65",
+      "area": "Turffield",
+      "section": "hidden",
+      "item": "Everstone",
+      "quantity": 1,
+      "keys": [
+        "turffield.everstone"
+      ],
+      "id": "printed-pickup-079",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "visible",
+      "item": "Heal Ball",
+      "quantity": 3,
+      "keys": [
+        "route5.heal-balls"
+      ],
+      "id": "printed-pickup-080",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "visible",
+      "item": "TM31 Attract",
+      "quantity": 1,
+      "keys": [
+        "route5.attract"
+      ],
+      "id": "printed-pickup-081",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "visible",
+      "item": "Shed Shell",
+      "quantity": 1,
+      "keys": [
+        "route5.shed-shell"
+      ],
+      "id": "printed-pickup-082",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "visible",
+      "item": "X Sp. Atk",
+      "quantity": 3,
+      "keys": [
+        "route5.x-sp-atk"
+      ],
+      "id": "printed-pickup-083",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Big Mushroom",
+      "quantity": 2,
+      "keys": [
+        "route5.big-mushrooms"
+      ],
+      "id": "printed-pickup-084",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Health Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-085",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Muscle Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-086",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Resist Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-087",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Genius Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-088",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Clever Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-089",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Swift Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-090",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Pretty Feather",
+      "quantity": 1,
+      "keys": [
+        "route5.feathers"
+      ],
+      "id": "printed-pickup-091",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "66–68",
+      "area": "Route 5",
+      "section": "hidden",
+      "item": "Absorb Bulb",
+      "quantity": 1,
+      "keys": [
+        "route5.absorb-bulb"
+      ],
+      "id": "printed-pickup-092",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "visible",
+      "item": "Magnet",
+      "quantity": 1,
+      "keys": [
+        "hulbury.magnet"
+      ],
+      "id": "printed-pickup-093",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "visible",
+      "item": "Shell Bell",
+      "quantity": 1,
+      "keys": [
+        "hulbury.shell-bell"
+      ],
+      "id": "printed-pickup-094",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "visible",
+      "item": "Net Ball",
+      "quantity": 5,
+      "keys": [
+        "hulbury.net-balls"
+      ],
+      "id": "printed-pickup-095",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "visible",
+      "item": "TM82 Electroweb",
+      "quantity": 1,
+      "keys": [
+        "hulbury.electroweb"
+      ],
+      "id": "printed-pickup-096",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "hidden",
+      "item": "X Sp. Def",
+      "quantity": 1,
+      "keys": [
+        "hulbury.x-sp-def"
+      ],
+      "id": "printed-pickup-097",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "hidden",
+      "item": "Full Heal",
+      "quantity": 1,
+      "keys": [
+        "hulbury.full-heal"
+      ],
+      "id": "printed-pickup-098",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "hidden",
+      "item": "X Speed",
+      "quantity": 2,
+      "keys": [
+        "hulbury.x-speed"
+      ],
+      "id": "printed-pickup-099",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "69–72",
+      "area": "Hulbury",
+      "section": "hidden",
+      "item": "Super Potion",
+      "quantity": 2,
+      "keys": [
+        "hulbury.super-potions"
+      ],
+      "id": "printed-pickup-100",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "visible",
+      "item": "Dusk Ball",
+      "quantity": 3,
+      "keys": [
+        "mine2.dusk-balls"
+      ],
+      "id": "printed-pickup-101",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "visible",
+      "item": "Grip Claw",
+      "quantity": 1,
+      "keys": [
+        "mine2.grip-claw"
+      ],
+      "id": "printed-pickup-102",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "visible",
+      "item": "TM49 Sand Tomb",
+      "quantity": 1,
+      "keys": [
+        "mine2.sand-tomb"
+      ],
+      "id": "printed-pickup-103",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "visible",
+      "item": "TM53 Mud Shot",
+      "quantity": 1,
+      "keys": [
+        "mine2.mud-shot"
+      ],
+      "id": "printed-pickup-104",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "hidden",
+      "item": "Star Piece",
+      "quantity": 1,
+      "keys": [
+        "mine2.star-piece"
+      ],
+      "id": "printed-pickup-105",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "73–74",
+      "area": "Galar Mine No. 2",
+      "section": "hidden",
+      "item": "Soft Sand",
+      "quantity": 1,
+      "keys": [
+        "mine2.soft-sand"
+      ],
+      "id": "printed-pickup-106",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "visible",
+      "item": "Amulet Coin",
+      "quantity": 1,
+      "keys": [
+        "outskirts.amulet-coin"
+      ],
+      "id": "printed-pickup-107",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "visible",
+      "item": "Great Ball",
+      "quantity": 3,
+      "keys": [
+        "outskirts.great-balls"
+      ],
+      "id": "printed-pickup-108",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "PP Up",
+      "quantity": 1,
+      "keys": [
+        "outskirts.pp-up"
+      ],
+      "id": "printed-pickup-109",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Health Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-110",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Muscle Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-111",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Resist Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-112",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Genius Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-113",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Clever Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-114",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Swift Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-115",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "75",
+      "area": "Motostoke Outskirts",
+      "section": "hidden",
+      "item": "Pretty Feather",
+      "quantity": 1,
+      "keys": [
+        "outskirts.feathers"
+      ],
+      "id": "printed-pickup-116",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Fire Stone",
+      "quantity": 1,
+      "keys": [
+        "north-wild.fire-stone"
+      ],
+      "id": "printed-pickup-117",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "TM39 Facade",
+      "quantity": 1,
+      "keys": [
+        "north-wild.facade"
+      ],
+      "id": "printed-pickup-118",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Water Stone",
+      "quantity": 1,
+      "keys": [
+        "north-wild.water-stone"
+      ],
+      "id": "printed-pickup-119",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "TM75 Low Sweep",
+      "quantity": 1,
+      "keys": [
+        "north-wild.low-sweep"
+      ],
+      "id": "printed-pickup-120",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Sun Stone",
+      "quantity": 1,
+      "keys": [
+        "north-wild.sun-stone"
+      ],
+      "id": "printed-pickup-121",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Moon Stone",
+      "quantity": 1,
+      "keys": [
+        "north-wild.moon-stone"
+      ],
+      "id": "printed-pickup-122",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "TM73 Cross Poison",
+      "quantity": 1,
+      "keys": [
+        "north-wild.cross-poison"
+      ],
+      "id": "printed-pickup-123",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Dawn Stone",
+      "quantity": 1,
+      "keys": [
+        "north-wild.dawn-stone"
+      ],
+      "id": "printed-pickup-124",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Focus Sash",
+      "quantity": 1,
+      "keys": [
+        "north-wild.focus-sash"
+      ],
+      "id": "printed-pickup-125",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "Assault Vest",
+      "quantity": 1,
+      "keys": [
+        "north-wild.assault-vest"
+      ],
+      "id": "printed-pickup-126",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "78–79",
+      "area": "North Wild Area",
+      "section": "visible",
+      "item": "TM65 Shadow Claw",
+      "quantity": 1,
+      "keys": [
+        "north-wild.shadow-claw"
+      ],
+      "id": "printed-pickup-127",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "visible",
+      "item": "Strawberry Sweet",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.strawberry-sweet"
+      ],
+      "id": "printed-pickup-128",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "visible",
+      "item": "Wise Glasses",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.wise-glasses"
+      ],
+      "id": "printed-pickup-129",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "visible",
+      "item": "Hyper Potion",
+      "quantity": 2,
+      "keys": [
+        "hammerlocke.hyper-potions"
+      ],
+      "id": "printed-pickup-130",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "visible",
+      "item": "Muscle Band",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.muscle-band"
+      ],
+      "id": "printed-pickup-131",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "visible",
+      "item": "TM29 Charm",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.charm"
+      ],
+      "id": "printed-pickup-132",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "hidden",
+      "item": "Nugget",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.nugget"
+      ],
+      "id": "printed-pickup-133",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "hidden",
+      "item": "Dire Hit",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.dire-hit"
+      ],
+      "id": "printed-pickup-134",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.rare-candy"
+      ],
+      "id": "printed-pickup-135",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "hidden",
+      "item": "Super Repel",
+      "quantity": 1,
+      "keys": [
+        "hammerlocke.super-repel"
+      ],
+      "id": "printed-pickup-136",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "80–84",
+      "area": "Hammerlocke",
+      "section": "hidden",
+      "item": "X Attack",
+      "quantity": 2,
+      "keys": [
+        "hammerlocke.x-attacks"
+      ],
+      "id": "printed-pickup-137",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "visible",
+      "item": "Ultra Ball",
+      "quantity": 3,
+      "keys": [
+        "route6.ultra-balls"
+      ],
+      "id": "printed-pickup-138",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "visible",
+      "item": "Light Clay",
+      "quantity": 1,
+      "keys": [
+        "route6.light-clay"
+      ],
+      "id": "printed-pickup-139",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "visible",
+      "item": "TM15 Dig",
+      "quantity": 1,
+      "keys": [
+        "route6.dig"
+      ],
+      "id": "printed-pickup-140",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "visible",
+      "item": "TM30 Steel Wing",
+      "quantity": 1,
+      "keys": [
+        "route6.steel-wing"
+      ],
+      "id": "printed-pickup-141",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "hidden",
+      "item": "Rare Bone",
+      "quantity": 2,
+      "keys": [
+        "route6.rare-bones"
+      ],
+      "id": "printed-pickup-142",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "route6.rare-candy"
+      ],
+      "id": "printed-pickup-143",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "85–87",
+      "area": "Route 6",
+      "section": "hidden",
+      "item": "Fossilized Fish",
+      "quantity": 2,
+      "keys": [
+        "route6.fossilized-fish"
+      ],
+      "id": "printed-pickup-144",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "visible",
+      "item": "Dusk Stone",
+      "quantity": 1,
+      "keys": [
+        "stow.dusk-stone"
+      ],
+      "id": "printed-pickup-145",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "visible",
+      "item": "Cracked Pot",
+      "quantity": 1,
+      "keys": [
+        "stow.cracked-pot"
+      ],
+      "id": "printed-pickup-146",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "visible",
+      "item": "Rocky Helmet",
+      "quantity": 1,
+      "keys": [
+        "stow.rocky-helmet"
+      ],
+      "id": "printed-pickup-147",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "visible",
+      "item": "TM74 Venoshock",
+      "quantity": 1,
+      "keys": [
+        "stow.venoshock"
+      ],
+      "id": "printed-pickup-148",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "hidden",
+      "item": "X Sp. Atk",
+      "quantity": 2,
+      "keys": [
+        "stow.x-sp-atk"
+      ],
+      "id": "printed-pickup-149",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "hidden",
+      "item": "Rare Bone",
+      "quantity": 3,
+      "keys": [
+        "stow.rare-bones"
+      ],
+      "id": "printed-pickup-150",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "hidden",
+      "item": "Metal Coat",
+      "quantity": 1,
+      "keys": [
+        "stow.metal-coat"
+      ],
+      "id": "printed-pickup-151",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "88–94",
+      "area": "Stow-on-Side",
+      "section": "hidden",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "stow.max-revive"
+      ],
+      "id": "printed-pickup-152",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "visible",
+      "item": "Bright Powder",
+      "quantity": 1,
+      "keys": [
+        "glimwood.bright-powder"
+      ],
+      "id": "printed-pickup-153",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "visible",
+      "item": "Big Root",
+      "quantity": 1,
+      "keys": [
+        "glimwood.big-root"
+      ],
+      "id": "printed-pickup-154",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "visible",
+      "item": "Hyper Potion",
+      "quantity": 2,
+      "keys": [
+        "glimwood.hyper-potions"
+      ],
+      "id": "printed-pickup-155",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "visible",
+      "item": "TM56 U-turn",
+      "quantity": 1,
+      "keys": [
+        "glimwood.u-turn"
+      ],
+      "id": "printed-pickup-156",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "visible",
+      "item": "TM24 Snore",
+      "quantity": 1,
+      "keys": [
+        "glimwood.snore"
+      ],
+      "id": "printed-pickup-157",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "hidden",
+      "item": "Full Heal",
+      "quantity": 2,
+      "keys": [
+        "glimwood.full-heals"
+      ],
+      "id": "printed-pickup-158",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "95–96",
+      "area": "Glimwood Tangle",
+      "section": "hidden",
+      "item": "Luminous Moss",
+      "quantity": 1,
+      "keys": [
+        "glimwood.luminous-moss"
+      ],
+      "id": "printed-pickup-159",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "97–99",
+      "area": "Ballonlea",
+      "section": "visible",
+      "item": "TM21 Rest",
+      "quantity": 1,
+      "keys": [
+        "ballonlea.rest"
+      ],
+      "id": "printed-pickup-160",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "97–99",
+      "area": "Ballonlea",
+      "section": "hidden",
+      "item": "Big Mushroom",
+      "quantity": 2,
+      "keys": [
+        "ballonlea.big-mushrooms"
+      ],
+      "id": "printed-pickup-161",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "97–99",
+      "area": "Ballonlea",
+      "section": "hidden",
+      "item": "Balm Mushroom",
+      "quantity": 1,
+      "keys": [
+        "ballonlea.balm-mushroom"
+      ],
+      "id": "printed-pickup-162",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "visible",
+      "item": "Quick Ball",
+      "quantity": 3,
+      "keys": [
+        "route7.quick-balls"
+      ],
+      "id": "printed-pickup-163",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "visible",
+      "item": "TM58 Assurance",
+      "quantity": 1,
+      "keys": [
+        "route7.assurance"
+      ],
+      "id": "printed-pickup-164",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "visible",
+      "item": "Safety Goggles",
+      "quantity": 1,
+      "keys": [
+        "route7.safety-goggles"
+      ],
+      "id": "printed-pickup-165",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "hidden",
+      "item": "Ether",
+      "quantity": 1,
+      "keys": [
+        "route7.ether"
+      ],
+      "id": "printed-pickup-166",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "hidden",
+      "item": "Balm Mushroom",
+      "quantity": 1,
+      "keys": [
+        "route7.balm-mushroom"
+      ],
+      "id": "printed-pickup-167",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "101–102",
+      "area": "Route 7",
+      "section": "hidden",
+      "item": "PP Up",
+      "quantity": 1,
+      "keys": [
+        "route7.pp-up"
+      ],
+      "id": "printed-pickup-168",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "X Defense",
+      "quantity": 3,
+      "keys": [
+        "route8.x-defense"
+      ],
+      "id": "printed-pickup-169",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "Elixir",
+      "quantity": 1,
+      "keys": [
+        "route8.elixir"
+      ],
+      "id": "printed-pickup-170",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "Pixie Plate",
+      "quantity": 1,
+      "keys": [
+        "route8.pixie-plate"
+      ],
+      "id": "printed-pickup-171",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "Big Nugget",
+      "quantity": 1,
+      "keys": [
+        "route8.big-nugget"
+      ],
+      "id": "printed-pickup-172",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "Nugget",
+      "quantity": 1,
+      "keys": [
+        "route8.nugget"
+      ],
+      "id": "printed-pickup-173",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "Shiny Stone",
+      "quantity": 1,
+      "keys": [
+        "route8.shiny-stone"
+      ],
+      "id": "printed-pickup-174",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "TM96 Smart Strike",
+      "quantity": 1,
+      "keys": [
+        "route8.smart-strike"
+      ],
+      "id": "printed-pickup-175",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "Hyper Potion",
+      "quantity": 3,
+      "keys": [
+        "route8.hyper-potions"
+      ],
+      "id": "printed-pickup-176",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "Luxury Ball",
+      "quantity": 3,
+      "keys": [
+        "route8.luxury-balls"
+      ],
+      "id": "printed-pickup-177",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "route8.max-revive"
+      ],
+      "id": "printed-pickup-178",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "King's Rock",
+      "quantity": 1,
+      "keys": [
+        "route8.kings-rock"
+      ],
+      "id": "printed-pickup-179",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "TM43 Brick Break",
+      "quantity": 1,
+      "keys": [
+        "route8.brick-break"
+      ],
+      "id": "printed-pickup-180",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "visible",
+      "item": "Terrain Extender",
+      "quantity": 1,
+      "keys": [
+        "route8.terrain-extender"
+      ],
+      "id": "printed-pickup-181",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "103–105",
+      "area": "Route 8",
+      "section": "hidden",
+      "item": "Star Piece",
+      "quantity": 2,
+      "keys": [
+        "route8.star-pieces"
+      ],
+      "id": "printed-pickup-182",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "visible",
+      "item": "TM51 Icicle Spear",
+      "quantity": 1,
+      "keys": [
+        "circhester.icicle-spear"
+      ],
+      "id": "printed-pickup-183",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "hidden",
+      "item": "Full Heal",
+      "quantity": 3,
+      "keys": [
+        "circhester.full-heals"
+      ],
+      "id": "printed-pickup-184",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "hidden",
+      "item": "Poké Doll",
+      "quantity": 1,
+      "keys": [
+        "circhester.poke-doll"
+      ],
+      "id": "printed-pickup-185",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "hidden",
+      "item": "Snowball",
+      "quantity": 1,
+      "keys": [
+        "circhester.snowball"
+      ],
+      "id": "printed-pickup-186",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "hidden",
+      "item": "Lemonade",
+      "quantity": 1,
+      "keys": [
+        "circhester.lemonade"
+      ],
+      "id": "printed-pickup-187",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "106–111",
+      "area": "Circhester",
+      "section": "hidden",
+      "item": "X Sp. Atk",
+      "quantity": 2,
+      "keys": [
+        "circhester.x-sp-atk"
+      ],
+      "id": "printed-pickup-188",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Max Potion",
+      "quantity": 1,
+      "keys": [
+        "route9.max-potion"
+      ],
+      "id": "printed-pickup-189",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "TM64 Avalanche",
+      "quantity": 1,
+      "keys": [
+        "route9.avalanche"
+      ],
+      "id": "printed-pickup-190",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Zoom Lens",
+      "quantity": 1,
+      "keys": [
+        "route9.zoom-lens"
+      ],
+      "id": "printed-pickup-191",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Protector",
+      "quantity": 1,
+      "keys": [
+        "route9.protector"
+      ],
+      "id": "printed-pickup-192",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "route9.max-revive"
+      ],
+      "id": "printed-pickup-193",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Dive Ball",
+      "quantity": 3,
+      "keys": [
+        "route9.dive-balls"
+      ],
+      "id": "printed-pickup-194",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "TM22 Rock Slide",
+      "quantity": 1,
+      "keys": [
+        "route9.rock-slide"
+      ],
+      "id": "printed-pickup-195",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "visible",
+      "item": "Scope Lens",
+      "quantity": 1,
+      "keys": [
+        "route9.scope-lens"
+      ],
+      "id": "printed-pickup-196",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Big Pearl",
+      "quantity": 1,
+      "keys": [
+        "route9.pearls"
+      ],
+      "id": "printed-pickup-197",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Pearl String",
+      "quantity": 1,
+      "keys": [
+        "route9.pearl-string"
+      ],
+      "id": "printed-pickup-198",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Ice Stone",
+      "quantity": 1,
+      "keys": [
+        "route9.ice-stone"
+      ],
+      "id": "printed-pickup-199",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Never-Melt Ice",
+      "quantity": 1,
+      "keys": [
+        "route9.never-melt-ice"
+      ],
+      "id": "printed-pickup-200",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "route9.rare-candy"
+      ],
+      "id": "printed-pickup-201",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Big Pearl",
+      "quantity": 1,
+      "keys": [
+        "route9.pearls"
+      ],
+      "id": "printed-pickup-202",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Pearl",
+      "quantity": 1,
+      "keys": [
+        "route9.pearls"
+      ],
+      "id": "printed-pickup-203",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Black Belt",
+      "quantity": 1,
+      "keys": [
+        "route9.black-belt"
+      ],
+      "id": "printed-pickup-204",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Normal Gem",
+      "quantity": 1,
+      "keys": [
+        "route9.normal-gem"
+      ],
+      "id": "printed-pickup-205",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "PP Up",
+      "quantity": 1,
+      "keys": [
+        "route9.pp-up"
+      ],
+      "id": "printed-pickup-206",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Pearl",
+      "quantity": 1,
+      "keys": [
+        "route9.pearls"
+      ],
+      "id": "printed-pickup-207",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Big Pearl",
+      "quantity": 1,
+      "keys": [
+        "route9.pearls"
+      ],
+      "id": "printed-pickup-208",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Max Elixir",
+      "quantity": 1,
+      "keys": [
+        "route9.max-elixir"
+      ],
+      "id": "printed-pickup-209",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Dire Hit",
+      "quantity": 3,
+      "keys": [
+        "route9.dire-hits"
+      ],
+      "id": "printed-pickup-210",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "112–115",
+      "area": "Route 9",
+      "section": "hidden",
+      "item": "Guard Spec.",
+      "quantity": 3,
+      "keys": [
+        "route9.guard-spec"
+      ],
+      "id": "printed-pickup-211",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "116–117",
+      "area": "Spikemuth",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "spikemuth.max-revive"
+      ],
+      "id": "printed-pickup-212",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "116–117",
+      "area": "Spikemuth",
+      "section": "visible",
+      "item": "Choice Specs",
+      "quantity": 1,
+      "keys": [
+        "spikemuth.choice-specs"
+      ],
+      "id": "printed-pickup-213",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "visible",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "route10.max-revive"
+      ],
+      "id": "printed-pickup-214",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "visible",
+      "item": "Power Herb",
+      "quantity": 1,
+      "keys": [
+        "route10.power-herb"
+      ],
+      "id": "printed-pickup-215",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "visible",
+      "item": "TM98 Stomping Tantrum",
+      "quantity": 1,
+      "keys": [
+        "route10.stomping-tantrum"
+      ],
+      "id": "printed-pickup-216",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "hidden",
+      "item": "X Attack",
+      "quantity": 2,
+      "keys": [
+        "route10.x-attacks"
+      ],
+      "id": "printed-pickup-217",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "hidden",
+      "item": "Comet Shard",
+      "quantity": 1,
+      "keys": [
+        "route10.comet-shard"
+      ],
+      "id": "printed-pickup-218",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "122–123",
+      "area": "Route 10",
+      "section": "hidden",
+      "item": "PP Up",
+      "quantity": 1,
+      "keys": [
+        "route10.pp-up"
+      ],
+      "id": "printed-pickup-219",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "visible",
+      "item": "Grassy Seed",
+      "quantity": 1,
+      "keys": [
+        "wyndon.grassy-seed"
+      ],
+      "id": "printed-pickup-220",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "visible",
+      "item": "Air Balloon",
+      "quantity": 1,
+      "keys": [
+        "wyndon.air-balloon"
+      ],
+      "id": "printed-pickup-221",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "visible",
+      "item": "TM93 Eerie Impulse",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.eerie-impulse"
+      ],
+      "id": "printed-pickup-222",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "visible",
+      "item": "Cell Battery",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.cell-battery"
+      ],
+      "id": "printed-pickup-223",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "visible",
+      "item": "Electric Seed",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.electric-seed"
+      ],
+      "id": "printed-pickup-224",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Max Revive",
+      "quantity": 1,
+      "keys": [
+        "wyndon.max-revive"
+      ],
+      "id": "printed-pickup-225",
+      "disposition": "existing checklist",
+      "grouped": true
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "wyndon.rare-candy"
+      ],
+      "id": "printed-pickup-226",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Balm Mushroom",
+      "quantity": 1,
+      "keys": [
+        "wyndon.balm-mushroom"
+      ],
+      "id": "printed-pickup-227",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Nugget",
+      "quantity": 1,
+      "keys": [
+        "wyndon.nugget"
+      ],
+      "id": "printed-pickup-228",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Black Sludge",
+      "quantity": 1,
+      "keys": [
+        "wyndon.black-sludge"
+      ],
+      "id": "printed-pickup-229",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "Big Nugget",
+      "quantity": 1,
+      "keys": [
+        "wyndon.big-nugget"
+      ],
+      "id": "printed-pickup-230",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "X Speed",
+      "quantity": 1,
+      "keys": [
+        "wyndon.x-speed"
+      ],
+      "id": "printed-pickup-231",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Wyndon",
+      "section": "hidden",
+      "item": "X Sp. Atk",
+      "quantity": 2,
+      "keys": [
+        "wyndon.x-sp-atk"
+      ],
+      "id": "printed-pickup-232",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "hidden",
+      "item": "Rare Candy",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.rare-candy"
+      ],
+      "id": "printed-pickup-233",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "hidden",
+      "item": "PP Up",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.pp-up"
+      ],
+      "id": "printed-pickup-234",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "124–139",
+      "area": "Rose Tower",
+      "section": "hidden",
+      "item": "Nugget",
+      "quantity": 1,
+      "keys": [
+        "rose-tower.nugget"
+      ],
+      "id": "printed-pickup-235",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "visible",
+      "item": "Life Orb",
+      "quantity": 1,
+      "keys": [
+        "weald.life-orb"
+      ],
+      "id": "printed-pickup-236",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "visible",
+      "item": "Misty Seed",
+      "quantity": 1,
+      "keys": [
+        "weald.misty-seed"
+      ],
+      "id": "printed-pickup-237",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "visible",
+      "item": "Mental Herb",
+      "quantity": 1,
+      "keys": [
+        "weald.mental-herb"
+      ],
+      "id": "printed-pickup-238",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "visible",
+      "item": "TM86 Phantom Force",
+      "quantity": 1,
+      "keys": [
+        "weald.phantom-force"
+      ],
+      "id": "printed-pickup-239",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "visible",
+      "item": "Smoke Ball",
+      "quantity": 1,
+      "keys": [
+        "weald.smoke-ball"
+      ],
+      "id": "printed-pickup-240",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "hidden",
+      "item": "Full Restore",
+      "quantity": 1,
+      "keys": [
+        "weald.full-restore"
+      ],
+      "id": "printed-pickup-241",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "140–141",
+      "area": "Slumbering Weald",
+      "section": "hidden",
+      "item": "Elixir",
+      "quantity": 1,
+      "keys": [
+        "weald.elixir"
+      ],
+      "id": "printed-pickup-242",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "39",
+      "area": "Route 1",
+      "section": "visible",
+      "item": "Potion",
+      "quantity": 1,
+      "keys": [
+        "route1.potion"
+      ],
+      "id": "printed-pickup-243",
+      "disposition": "existing checklist"
+    },
+    {
+      "pages": "39",
+      "area": "Route 1",
+      "section": "visible",
+      "item": "Paralyze Heal",
+      "quantity": 2,
+      "keys": [
+        "route1.paralyze-heals"
+      ],
+      "id": "printed-pickup-244",
+      "disposition": "existing checklist"
+    }
+  ],
+  "sideEvents": [
+    {
+      "id": "printed-side-event-01",
+      "indexPage": 28,
+      "walkthroughPage": 47,
+      "location": "Wild Area",
+      "keys": [
+        "wild-area.lets-go-pikachu"
+      ]
+    },
+    {
+      "id": "printed-side-event-02",
+      "indexPage": 28,
+      "walkthroughPage": 47,
+      "location": "Wild Area",
+      "keys": [
+        "wild-area.lets-go-eevee"
+      ]
+    },
+    {
+      "id": "printed-side-event-03",
+      "indexPage": 28,
+      "walkthroughPage": 47,
+      "location": "Wild Area",
+      "keys": [
+        "wild-area.poke-dolls"
+      ]
+    },
+    {
+      "id": "printed-side-event-04",
+      "indexPage": 28,
+      "walkthroughPage": 51,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-05",
+      "indexPage": 28,
+      "walkthroughPage": 52,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.focus-energy"
+      ]
+    },
+    {
+      "id": "printed-side-event-06",
+      "indexPage": 28,
+      "walkthroughPage": 52,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.earbuds"
+      ]
+    },
+    {
+      "id": "printed-side-event-07",
+      "indexPage": 28,
+      "walkthroughPage": 52,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-08",
+      "indexPage": 28,
+      "walkthroughPage": 55,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.star-piece"
+      ]
+    },
+    {
+      "id": "printed-side-event-09",
+      "indexPage": 28,
+      "walkthroughPage": 55,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.minccino-return",
+        "motostoke.minccino-reward"
+      ]
+    },
+    {
+      "id": "printed-side-event-10",
+      "indexPage": 28,
+      "walkthroughPage": 57,
+      "location": "Route 3",
+      "keys": [
+        "route3.berry-gift"
+      ]
+    },
+    {
+      "id": "printed-side-event-11",
+      "indexPage": 28,
+      "walkthroughPage": 63,
+      "location": "Turffield",
+      "keys": [
+        "turffield.riddle"
+      ]
+    },
+    {
+      "id": "printed-side-event-12",
+      "indexPage": 28,
+      "walkthroughPage": 64,
+      "location": "Turffield",
+      "keys": [
+        "turffield.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-13",
+      "indexPage": 28,
+      "walkthroughPage": 64,
+      "location": "Turffield",
+      "keys": [
+        "turffield.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-14",
+      "indexPage": 28,
+      "walkthroughPage": 67,
+      "location": "Route 5",
+      "keys": [
+        "route5.toxel"
+      ]
+    },
+    {
+      "id": "printed-side-event-15",
+      "indexPage": 28,
+      "walkthroughPage": 70,
+      "location": "Hulbury",
+      "keys": [
+        "hulbury.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-16",
+      "indexPage": 28,
+      "walkthroughPage": 71,
+      "location": "Hulbury",
+      "keys": [
+        "hulbury.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-17",
+      "indexPage": 28,
+      "walkthroughPage": 81,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-18",
+      "indexPage": 28,
+      "walkthroughPage": 82,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.soothe-bell"
+      ]
+    },
+    {
+      "id": "printed-side-event-19",
+      "indexPage": 28,
+      "walkthroughPage": 82,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.friendship-ribbon"
+      ]
+    },
+    {
+      "id": "printed-side-event-20",
+      "indexPage": 28,
+      "walkthroughPage": 82,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.effort-ribbon"
+      ]
+    },
+    {
+      "id": "printed-side-event-21",
+      "indexPage": 28,
+      "walkthroughPage": 82,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.weather-gifts"
+      ]
+    },
+    {
+      "id": "printed-side-event-22",
+      "indexPage": 28,
+      "walkthroughPage": 82,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.letter",
+        "ballonlea.letter",
+        "hammerlocke.letter-return"
+      ]
+    },
+    {
+      "id": "printed-side-event-23",
+      "indexPage": 28,
+      "walkthroughPage": 83,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.mr-focus"
+      ]
+    },
+    {
+      "id": "printed-side-event-24",
+      "indexPage": 28,
+      "walkthroughPage": 83,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-25",
+      "indexPage": 28,
+      "walkthroughPage": 83,
+      "location": "Hammerlocke",
+      "keys": [
+        "hammerlocke.applin"
+      ]
+    },
+    {
+      "id": "printed-side-event-26",
+      "indexPage": 28,
+      "walkthroughPage": 89,
+      "location": "Stow-on-Side",
+      "keys": [
+        "stow.fossils"
+      ]
+    },
+    {
+      "id": "printed-side-event-27",
+      "indexPage": 28,
+      "walkthroughPage": 90,
+      "location": "Stow-on-Side",
+      "keys": [
+        "stow.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-28",
+      "indexPage": 28,
+      "walkthroughPage": 90,
+      "location": "Stow-on-Side",
+      "keys": [
+        "stow.fly"
+      ]
+    },
+    {
+      "id": "printed-side-event-29",
+      "indexPage": 28,
+      "walkthroughPage": 90,
+      "location": "Stow-on-Side",
+      "keys": [
+        "stow.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-30",
+      "indexPage": 28,
+      "walkthroughPage": 97,
+      "location": "Ballonlea",
+      "keys": [
+        "ballonlea.fire-outfit"
+      ]
+    },
+    {
+      "id": "printed-side-event-31",
+      "indexPage": 28,
+      "walkthroughPage": 97,
+      "location": "Ballonlea",
+      "keys": [
+        "ballonlea.revenge"
+      ]
+    },
+    {
+      "id": "printed-side-event-32",
+      "indexPage": 28,
+      "walkthroughPage": 97,
+      "location": "Ballonlea",
+      "keys": [
+        "ballonlea.eviolite"
+      ]
+    },
+    {
+      "id": "printed-side-event-33",
+      "indexPage": 28,
+      "walkthroughPage": 98,
+      "location": "Ballonlea",
+      "keys": [
+        "ballonlea.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-34",
+      "indexPage": 28,
+      "walkthroughPage": 98,
+      "location": "Ballonlea",
+      "keys": [
+        "ballonlea.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-35",
+      "indexPage": 28,
+      "walkthroughPage": 106,
+      "location": "Circhester",
+      "keys": [
+        "circhester.rock-tomb"
+      ]
+    },
+    {
+      "id": "printed-side-event-36",
+      "indexPage": 28,
+      "walkthroughPage": 106,
+      "location": "Circhester",
+      "keys": [
+        "circhester.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-37",
+      "indexPage": 28,
+      "walkthroughPage": 107,
+      "location": "Circhester",
+      "keys": [
+        "circhester.detective"
+      ]
+    },
+    {
+      "id": "printed-side-event-38",
+      "indexPage": 28,
+      "walkthroughPage": 107,
+      "location": "Circhester",
+      "keys": [
+        "circhester.screech"
+      ]
+    },
+    {
+      "id": "printed-side-event-39",
+      "indexPage": 28,
+      "walkthroughPage": 107,
+      "location": "Circhester",
+      "keys": [
+        "circhester.fake-tears"
+      ]
+    },
+    {
+      "id": "printed-side-event-40",
+      "indexPage": 28,
+      "walkthroughPage": 107,
+      "location": "Circhester",
+      "keys": [
+        "circhester.catching-charm"
+      ]
+    },
+    {
+      "id": "printed-side-event-41",
+      "indexPage": 28,
+      "walkthroughPage": 107,
+      "location": "Circhester",
+      "keys": [
+        "circhester.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-42",
+      "indexPage": 28,
+      "walkthroughPage": 115,
+      "location": "Route 9",
+      "keys": [
+        "route9.dive"
+      ]
+    },
+    {
+      "id": "printed-side-event-43",
+      "indexPage": 28,
+      "walkthroughPage": 117,
+      "location": "Spikemuth",
+      "keys": [
+        "spikemuth.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-44",
+      "indexPage": 28,
+      "walkthroughPage": 125,
+      "location": "Wyndon",
+      "keys": [
+        "wyndon.trade"
+      ]
+    },
+    {
+      "id": "printed-side-event-45",
+      "indexPage": 28,
+      "walkthroughPage": 126,
+      "location": "Wyndon",
+      "keys": [
+        "wyndon.rotom-catalog"
+      ]
+    },
+    {
+      "id": "printed-side-event-46",
+      "indexPage": 28,
+      "walkthroughPage": 127,
+      "location": "Wyndon",
+      "keys": [
+        "wyndon.ball-guy"
+      ]
+    },
+    {
+      "id": "printed-side-event-47",
+      "indexPage": 28,
+      "walkthroughPage": 146,
+      "location": "Postwick",
+      "keys": [
+        "postwick.charmander"
+      ]
+    },
+    {
+      "id": "printed-side-event-48",
+      "indexPage": 28,
+      "walkthroughPage": 146,
+      "location": "Motostoke",
+      "keys": [
+        "motostoke.ball-guy-card"
+      ]
+    },
+    {
+      "id": "printed-side-event-49",
+      "indexPage": 28,
+      "walkthroughPage": 146,
+      "location": "Galar Mine",
+      "keys": [
+        "galar-mine.rose-card"
+      ]
+    },
+    {
+      "id": "printed-side-event-50",
+      "indexPage": 28,
+      "walkthroughPage": 146,
+      "location": "Hulbury",
+      "keys": [
+        "hulbury.delivery-station",
+        "hulbury.delivery-swirlix",
+        "hulbury.delivery-market"
+      ]
+    },
+    {
+      "id": "printed-side-event-51",
+      "indexPage": 28,
+      "walkthroughPage": 147,
+      "location": "Stow-on-Side",
+      "keys": [
+        "stow.beast-ball"
+      ]
+    },
+    {
+      "id": "printed-side-event-52",
+      "indexPage": 28,
+      "walkthroughPage": 147,
+      "location": "Circhester",
+      "keys": [
+        "circhester.morimoto"
+      ]
+    },
+    {
+      "id": "printed-side-event-53",
+      "indexPage": 28,
+      "walkthroughPage": 147,
+      "location": "Circhester",
+      "keys": [
+        "circhester.shiny-charm"
+      ]
+    },
+    {
+      "id": "printed-side-event-54",
+      "indexPage": 28,
+      "walkthroughPage": 148,
+      "location": "Wyndon",
+      "keys": [
+        "battle-tower.type-null"
+      ]
+    },
+    {
+      "id": "printed-side-event-55",
+      "indexPage": 28,
+      "walkthroughPage": 148,
+      "location": "Wyndon",
+      "keys": [
+        "battle-tower.leon-card"
+      ]
+    },
+    {
+      "id": "printed-side-event-56",
+      "indexPage": 28,
+      "walkthroughPage": 148,
+      "location": "Spikemuth",
+      "keys": [
+        "spikemuth.marnie",
+        "spikemuth.marnie-daily"
+      ]
+    }
+  ]
+}

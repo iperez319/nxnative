@@ -1,0 +1,476 @@
+{"sharedPlacements": {
+  "rose-tower.eerie-impulse": ["Rose Tower", "Battle Tower"],
+  "rose-tower.cell-battery": ["Rose Tower", "Battle Tower"],
+  "rose-tower.electric-seed": ["Rose Tower", "Battle Tower"],
+  "rose-tower.rare-candy": ["Rose Tower", "Battle Tower"],
+  "rose-tower.pp-up": ["Rose Tower", "Battle Tower"],
+  "rose-tower.nugget": ["Rose Tower", "Battle Tower"],
+  "wild-area.chloe": ["South Wild Area", "North Wild Area"],
+  "wild-area.watt-find": ["South Wild Area", "North Wild Area"],
+  "fashion.hairstyle": [
+    "Motostoke",
+    "Hammerlocke",
+    "Circhester",
+    "Wyndon"
+  ],
+  "nursery.hatch-egg": [
+    "Route 5",
+    "North Wild Area"
+  ],
+  "wild-area.bike-outfit": [
+    "South Wild Area",
+    "North Wild Area"
+  ],
+  "wild-area.first-raid": [
+    "South Wild Area",
+    "North Wild Area"
+  ],
+  "wild-area.raid-battle": [
+    "South Wild Area",
+    "North Wild Area"
+  ]
+},
+ "activities": [
+  {
+    "name": "Wedgehurst station Slowpoke",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#gifts-pickups-and-story-preparation",
+    "review": "The station clearance flag has an alternate finalizer without the encounter. Current ownership also needs source and lifetime checks. Retain the explicit local-capture mark.",
+    "keys": ["wedgehurst.galarian-slowpoke"]
+  },
+  {
+    "name": "First 100-Watt field purchase",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#gifts-pickups-and-story-preparation",
+    "review": "Both offer work values are random rolls written during initialization and after purchase. Balance and item ownership have other sources. Retain the player mark.",
+    "keys": ["wild-area.watt-find"]
+  },
+  {
+    "name": "Dusty Bowl evolution",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#gifts-pickups-and-story-preparation",
+    "review": "The arch sequence sets its flag before calling evolution and resets it afterward. Ownership and Dex registration have alternate sources. Retain the local evolution player mark.",
+    "keys": ["north-wild.yamask-evolution"]
+  },
+  {
+    "name": "Routes 7–10 Trainer wins",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#field-trainers",
+    "review": "The native finalizer sets each Trainer ID hash flag. Route 2 archives corroborate ordinary victories. Special result and setup paths limit win-only interpretation. Doubles require both flags. Decoder fixtures cover missing, false, wrong-type and restored state.",
+    "keys": [
+      "route7.trainer-mila",
+      "route7.trainer-bruce",
+      "route7.trainer-caden",
+      "route8.trainer-joanna",
+      "route8.trainer-barbara",
+      "route8.trainer-charles",
+      "route8.trainer-jordan",
+      "route8.trainer-bobby",
+      "route9.trainer-harriet",
+      "route9.trainer-zoe",
+      "route9.trainer-carter",
+      "route9.trainer-reece",
+      "route9.trainer-marina",
+      "route9.trainer-jacob",
+      "route9.trainer-logan",
+      "route9.trainer-scarlett",
+      "route9.trainer-layla",
+      "route9.trainer-owen",
+      "route10.trainer-graham",
+      "route10.trainer-douglas",
+      "route10.trainer-ronald",
+      "route10.trainer-geoffrey",
+      "route10.trainer-harper",
+      "route10.trainer-donald",
+      "route10.trainer-glenn",
+      "route10.trainer-gillian"
+    ]
+  },
+  {
+    "name": "Route 6 and Glimwood Trainer wins",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#field-trainers",
+    "review": "The native finalizer sets each Trainer ID hash flag. Route 2 archives corroborate ordinary victories. Special result and setup paths limit win-only interpretation. Doubles require both flags. Decoder fixtures cover missing, false, wrong-type and restored state.",
+    "keys": [
+      "route6.trainer-anita",
+      "route6.trainer-iwan",
+      "route6.trainer-diane",
+      "route6.trainer-nicola",
+      "route6.trainer-ruth",
+      "route6.trainer-duncan",
+      "glimwood.trainer-derek",
+      "glimwood.trainer-robert",
+      "glimwood.trainer-judy"
+    ]
+  },
+  {
+    "name": "Grass, Water and Fire approach Trainer wins",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#field-trainers",
+    "review": "The native finalizer sets each Trainer ID hash flag. Route 2 archives corroborate ordinary victories. Special result and setup paths limit win-only interpretation. Doubles require both flags. Decoder fixtures cover missing, false, wrong-type and restored state.",
+    "keys": [
+      "route3.trainer-rei",
+      "route3.trainer-hannah",
+      "route3.trainer-marvin",
+      "route3.trainer-kayleigh",
+      "route3.trainer-tad",
+      "route3.trainer-peter",
+      "galar-mine.trainer-keith",
+      "galar-mine.trainer-georgia",
+      "galar-mine.trainer-sandra",
+      "galar-mine.trainer-russel",
+      "route4.trainer-jaime",
+      "route4.trainer-shane",
+      "route4.trainer-bradley",
+      "route4.trainer-mia",
+      "route4.trainer-rhys",
+      "route4.trainer-sunny",
+      "route5.trainer-gillian",
+      "route5.trainer-stuart",
+      "route5.trainer-debra",
+      "route5.trainer-adrian",
+      "route5.trainer-denise",
+      "route5.trainer-gabrielle",
+      "mine2.trainer-francis",
+      "mine2.trainer-yvonne",
+      "mine2.trainer-vincent",
+      "outskirts.trainer-caroline",
+      "outskirts.trainer-raymond"
+    ]
+  },
+  {
+    "name": "Postwick first Hop victory",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "../shield-early-opening-milestones.md#counterexamples-that-affect-the-guide",
+    "review": "FE_EV0110_WIN is written by the victory arm. The same battle-resolution phase can follow a loss.",
+    "keys": ["postwick.hop-first-win"]
+  },
+  {
+    "name": "Route 2 Hop victory",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "../shield-route2-milestones.md#readiness-resolution-and-victory-are-separate",
+    "review": "FE_EV0280_WIN follows the victory arm. Both ordinary results reach phase 290.",
+    "keys": ["route2.hop-win"]
+  },
+  {
+    "name": "Route 2 field Trainer wins",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#field-trainers",
+    "review": "The native finalizer sets each Trainer ID hash flag. Route 2 archives corroborate ordinary victories. Special result and setup paths limit win-only interpretation. Doubles require both flags. Decoder fixtures cover missing, false, wrong-type and restored state.",
+    "keys": ["route2.jake", "route2.lauren", "route2.benjamin"]
+  },
+  {
+    "name": "Motostoke first-visit gift and rival battle",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#gifts-pickups-and-story-preparation",
+    "review": "The held-item gift has capacity and alternate-source paths. Optional Hop readiness, resolution and card delivery do not establish the battle result. Retain both player marks.",
+    "keys": ["motostoke.leon-starter-gift", "motostoke.hop-win"]
+  },
+  {
+    "name": "Sonia’s crisis gift",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "../shield-weald-crisis-milestones.md#the-champion-introduction-is-interrupted-not-a-completed-match",
+    "review": "The scene writes phase 1830 before its gift call. Max Revives have multiple acquisition sources.",
+    "keys": ["postwick.sonia-revives"]
+  },
+  {
+    "name": "Route 1 visible pickups",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "town-activities-audit.md#opening-gifts-and-campsite-destinations",
+    "review": "The guide labels these exact placement flags as recorded. Opening archives cross-check the Route 1 placement states.",
+    "keys": [
+      "route1.paralyze-heals", "route1.potion"
+    ]
+  },
+  {
+    "name": "Other visible pickups",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "shield_guide_pickup_flags.inc",
+    "review": "Placement flags are joined by zone and item. The guide labels these as estimated from the save.",
+    "keys": [
+      "ballonlea.rest", "circhester.icicle-spear", "galar-mine.boots", "galar-mine.great-balls",
+      "galar-mine.scary-face", "galar-mine.super-potions", "glimwood.big-root", "glimwood.bright-powder",
+      "glimwood.hyper-potions", "glimwood.snore", "glimwood.u-turn", "hammerlocke.charm",
+      "hammerlocke.hyper-potions", "hammerlocke.muscle-band", "hammerlocke.strawberry-sweet",
+      "hammerlocke.wise-glasses", "hulbury.electroweb", "hulbury.magnet", "hulbury.net-balls",
+      "hulbury.shell-bell", "mine2.dusk-balls", "mine2.grip-claw", "mine2.mud-shot", "mine2.sand-tomb",
+      "motostoke.black-glasses", "motostoke.burn-heals", "motostoke.great-balls", "motostoke.pay-day",
+      "motostoke.silk-scarf", "north-wild.assault-vest", "north-wild.cross-poison", "north-wild.dawn-stone",
+      "north-wild.facade", "north-wild.fire-stone", "north-wild.focus-sash", "north-wild.low-sweep",
+      "north-wild.moon-stone", "north-wild.shadow-claw", "north-wild.sun-stone", "north-wild.water-stone",
+      "outskirts.amulet-coin", "outskirts.great-balls", "rose-tower.cell-battery", "rose-tower.eerie-impulse",
+      "rose-tower.electric-seed", "route10.max-revive", "route10.power-herb", "route10.stomping-tantrum",
+      "route2.balls", "route2.choice-band", "route2.great-ball", "route2.payback", "route2.potion",
+      "route2.pp-max", "route2.psychic-seed", "route2.psycho-cut", "route3.beat-up", "route3.heal-balls",
+      "route3.rock-blast", "route3.super-potion", "route4.cleanse-tag", "route4.nest-balls", "route4.pin-missile",
+      "route4.sharp-beak", "route4.silver-powder", "route5.attract", "route5.heal-balls", "route5.shed-shell",
+      "route5.x-sp-atk", "route6.dig", "route6.light-clay", "route6.steel-wing", "route6.ultra-balls",
+      "route7.assurance", "route7.quick-balls", "route7.safety-goggles", "route8.brick-break",
+      "route8.hyper-potions", "route8.kings-rock", "route8.luxury-balls", "route8.max-revive",
+      "route8.shiny-stone", "route8.smart-strike", "route8.terrain-extender", "route9.avalanche",
+      "route9.dive-balls", "route9.max-potion", "route9.max-revive", "route9.protector", "route9.rock-slide",
+      "route9.scope-lens", "route9.zoom-lens", "spikemuth.choice-specs", "spikemuth.max-revive",
+      "stow.cracked-pot", "stow.dusk-stone", "stow.rocky-helmet", "stow.venoshock", "turffield.brutal-swing",
+      "turffield.max-revive", "turffield.solar-beam", "turffield.x-attacks", "weald.life-orb",
+      "weald.mental-herb", "weald.misty-seed", "weald.phantom-force", "weald.smoke-ball", "wedgehurst.poke-doll",
+      "wedgehurst.rare-candy", "wild-area.air-slash", "wild-area.bulldoze", "wild-area.leftovers",
+      "wild-area.max-revive", "wild-area.tail-slap", "wild-area.thunder-stone", "wild-area.white-herb",
+      "wyndon.air-balloon", "wyndon.grassy-seed"
+    ]
+  },
+  {
+    "name": "Fixed hidden pickups",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "town-activities-audit.md#hidden-sparkle-checkoffs",
+    "review": "Every actor index mapped to the row must be permanently collected.",
+    "keys": [
+      "ballonlea.balm-mushroom", "ballonlea.big-mushrooms", "circhester.full-heals", "circhester.lemonade",
+      "circhester.poke-doll", "circhester.snowball", "circhester.x-sp-atk", "galar-mine.ether",
+      "galar-mine.hard-stone", "galar-mine.revives", "galar-mine.star-piece", "galar-mine.stardust",
+      "glimwood.full-heals", "glimwood.luminous-moss", "hammerlocke.dire-hit", "hammerlocke.nugget",
+      "hammerlocke.rare-candy", "hammerlocke.super-repel", "hammerlocke.x-attacks", "hulbury.full-heal",
+      "hulbury.super-potions", "hulbury.x-sp-def", "hulbury.x-speed", "mine2.soft-sand", "mine2.star-piece",
+      "motostoke.hidden-nugget", "motostoke.hidden-paralyze-heals", "motostoke.hidden-poke-doll",
+      "motostoke.hidden-repel", "motostoke.hidden-revival-herb", "motostoke.hidden-super-potion",
+      "motostoke.hidden-x-accuracy", "outskirts.pp-up", "rose-tower.nugget", "rose-tower.pp-up",
+      "rose-tower.rare-candy", "route10.comet-shard", "route10.pp-up", "route10.x-attacks", "route2.fresh-water",
+      "route2.max-ether", "route2.prism-scale", "route2.repel", "route2.water-stone", "route3.big-mushroom",
+      "route3.burn-heal", "route3.revive", "route3.x-defense", "route4.energy-powder", "route4.energy-root",
+      "route4.ether", "route4.paralyze-heal", "route4.rare-candy", "route4.repel", "route4.revival-herb",
+      "route4.x-accuracy", "route5.absorb-bulb", "route5.big-mushrooms", "route6.fossilized-fish",
+      "route6.rare-bones", "route6.rare-candy", "route7.balm-mushroom", "route7.ether", "route7.pp-up",
+      "route8.big-nugget", "route8.elixir", "route8.nugget", "route8.pixie-plate", "route8.star-pieces",
+      "route8.x-defense", "route9.black-belt", "route9.dire-hits", "route9.guard-spec", "route9.ice-stone",
+      "route9.max-elixir", "route9.never-melt-ice", "route9.normal-gem", "route9.pearl-string", "route9.pearls",
+      "route9.pp-up", "route9.rare-candy", "stow.max-revive", "stow.metal-coat", "stow.rare-bones",
+      "stow.x-sp-atk", "turffield.energy-root", "turffield.everstone", "turffield.fresh-water",
+      "turffield.leaf-stone", "weald.elixir", "weald.full-restore", "wedgehurst.revive", "wyndon.balm-mushroom",
+      "wyndon.big-nugget", "wyndon.black-sludge", "wyndon.max-revive", "wyndon.nugget", "wyndon.rare-candy",
+      "wyndon.x-sp-atk", "wyndon.x-speed"
+    ]
+  },
+  {
+    "name": "Recurring hidden pickups",
+    "kind": "saved-state",
+    "cadence": "respawn",
+    "source": "town-activities-audit.md#hidden-sparkle-checkoffs",
+    "review": "Recorded waiting-for-respawn state is temporary. The checkoff can disappear on reset.",
+    "keys": [
+      "motostoke.hidden-poke-ball", "north-wild.lake-stones", "outskirts.feathers", "route2.rare-candy",
+      "route5.feathers"
+    ]
+  },
+  {
+    "name": "Gym missions and badges",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "shield_guide_gyms.h",
+    "review": "Use the row’s own mission or badge flag.",
+    "keys": [
+      "ballonlea.gym-badge", "ballonlea.gym-mission", "circhester.gym-badge", "circhester.gym-mission",
+      "hammerlocke.gym-badge", "hammerlocke.gym-mission", "hulbury.gym-badge", "hulbury.gym-mission",
+      "motostoke.gym-badge", "motostoke.gym-mission", "spikemuth.gym-badge", "spikemuth.gym-mission",
+      "stow.gym-badge", "stow.gym-mission", "turffield.gym-badge", "turffield.gym-mission"
+    ]
+  },
+  {
+    "name": "Postgame stadiums",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "shield_guide_postgame.h",
+    "review": "Use the exact local resolution record. Turffield needs its debrief flag.",
+    "keys": [
+      "ballonlea.postgame-stadium", "circhester.postgame-stadium", "hammerlocke.postgame-stadium",
+      "hulbury.postgame-stadium", "motostoke.postgame-stadium", "stow.postgame-stadium",
+      "turffield.postgame-stadium"
+    ]
+  },
+  {
+    "name": "League Cards",
+    "kind": "collection",
+    "cadence": "possession",
+    "source": "shield_guide_league_cards.h",
+    "review": "Use the card’s album slot.",
+    "keys": [
+      "ballonlea.bede-rare-card", "ballonlea.marnie-card", "ballonlea.opal-rare-card", "battle-tower.leon-card",
+      "circhester.melony-card", "circhester.melony-rare-card", "galar-mine.rose-card", "hammerlocke.raihan-card",
+      "hammerlocke.raihan-rare-card", "hulbury.nessa-card", "hulbury.nessa-rare-card", "hulbury.rose-card",
+      "mine2.bede-card", "motostoke.ball-guy-card", "motostoke.hop-card", "motostoke.kabu-card",
+      "motostoke.kabu-rare-card", "motostoke.leon-card", "power-plant.piers-rare-card", "route6.opal-card",
+      "spikemuth.marnie-rare-card", "spikemuth.piers-card", "stow.allister-card", "stow.allister-rare-card",
+      "turffield.milo-card", "turffield.milo-rare-card", "weald.hop-rare-card"
+    ]
+  },
+  {
+    "name": "Local uniform checkoffs",
+    "kind": "collection",
+    "cadence": "possession",
+    "source": "shield_guide_uniforms.h",
+    "review": "All required parts need to be in the wardrobe. Shop-only uniform rows are in the wardrobe detail family.",
+    "keys": [
+      "uniform.challenger", "uniform.champion", "uniform.dark", "uniform.dragon", "uniform.fairy", "uniform.fire",
+      "uniform.ghost", "uniform.grass", "uniform.ice", "uniform.ranked", "uniform.tower", "uniform.water"
+    ]
+  },
+  {
+    "name": "Card Maker unlocks",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "shield_guide_card_backgrounds.h",
+    "review": "Use a style unlock flag or the specific background counter threshold.",
+    "keys": [
+      "ballonlea.card-arrival", "ballonlea.card-badge", "circhester.card-arrival", "circhester.card-badge",
+      "circhester.card-invitation", "circhester.card-postgame", "galar-mine.card-background",
+      "hammerlocke.card-arrival", "hammerlocke.card-badge", "hammerlocke.card-postgame", "hulbury.card-arrival",
+      "hulbury.card-badge", "hulbury.card-departure", "hulbury.card-postgame", "mine2.card-arrival",
+      "motostoke.card-badge", "motostoke.card-ball-guy", "motostoke.card-creator", "motostoke.card-earnings",
+      "motostoke.card-hairstyles", "motostoke.card-postgame", "spikemuth.card-arrival", "spikemuth.card-badge",
+      "stow.card-arrival", "stow.card-badge", "stow.card-postgame", "turffield.card-arrival",
+      "turffield.card-badge", "turffield.card-geoglyph", "turffield.card-postgame", "weald.card-epilogue-end",
+      "weald.card-epilogue-start", "wild-area.card-curry", "wild-area.card-lets-go-eevee",
+      "wild-area.card-lets-go-pikachu", "wild-area.card-pokemon-quest", "wild-area.card-raids",
+      "wyndon.card-arrival", "wyndon.card-champion"
+    ]
+  },
+  {
+    "name": "Story and independent records",
+    "kind": "recorded",
+    "cadence": "one-time",
+    "source": "town-activities-audit.md#automatic-checklist-completion",
+    "review": "Independent flags or the positive hair-service record establish the unlock or interaction.",
+    "keys": [
+      "fashion.hairstyle", "hammerlocke.sonia-lock", "north-wild.nursery-taxi", "route10.campsite-taxi",
+      "route3.campsite-taxi", "route4.campsite-taxi", "route5.campsite-taxi", "route5.nursery-taxi",
+      "route6.campsite-taxi", "route7.campsite-taxi", "route8.campsite-taxi", "route9.campsite-taxi",
+      "weald.postgame-epilogue", "weald.sonia-shrine", "wyndon.champion-cup"
+    ]
+  },
+  {
+    "name": "Repeatable activity counters",
+    "kind": "recorded",
+    "cadence": "repeatable",
+    "source": "town-activities-audit.md#wild-area-battle-records",
+    "review": "Use saved battle, catch, hatch or best-run records. The raid catch record cannot establish a win with no catch.",
+    "keys": [
+      "north-wild.digging-duo", "nursery.hatch-egg", "wild-area.first-raid", "wild-area.raid-battle"
+    ]
+  },
+  {
+    "name": "Quest, visit or cumulative estimate",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "town-activities-audit.md#automatic-checklist-completion",
+    "review": "The decoder labels these save-based estimates. See the cited audit and the per-key rule for bounds.",
+    "keys": [
+      "ballonlea.ball-guy", "ballonlea.fire-outfit", "ballonlea.letter", "ballonlea.trade",
+      "battle-tower.doubles-master", "battle-tower.judge", "battle-tower.singles-master", "circhester.ball-guy",
+      "circhester.detective", "circhester.morimoto", "circhester.trade", "hammerlocke.ball-guy",
+      "hammerlocke.letter", "hammerlocke.letter-return", "hammerlocke.trade", "hulbury.ball-guy",
+      "hulbury.delivery-market", "hulbury.delivery-station", "hulbury.delivery-swirlix", "hulbury.trade",
+      "motostoke.ball-guy", "motostoke.fountain", "motostoke.marnie-smile", "motostoke.minccino-return",
+      "motostoke.minccino-reward", "motostoke.trade", "north-wild.bike-turbo", "north-wild.rally-fast-ball",
+      "postwick.charmander", "spikemuth.marnie", "spikemuth.trade", "stow.ball-guy", "stow.trade",
+      "turffield.ball-guy", "turffield.riddle", "turffield.trade", "wedgehurst.birthday", "wedgehurst.lab-potion",
+      "wild-area.camp-toys", "wild-area.golden-cookware", "wild-area.lets-go-eevee", "wild-area.lets-go-pikachu",
+      "wyndon.ball-guy", "wyndon.trade"
+    ]
+  },
+  {
+    "name": "Repeatable milestone estimates",
+    "kind": "estimate",
+    "cadence": "repeatable",
+    "source": "town-activities-audit.md#automatic-checklist-completion",
+    "review": "Counters can prove a recorded occurrence or reach a threshold. Rotom Rally may fall back to a saved high score.",
+    "keys": [
+      "battle-tower.first-win", "motostoke.poke-jobs", "north-wild.rally", "route6.fossil-revival",
+      "wild-area.first-berries", "wild-area.first-curry", "wyndon.champion-tournament"
+    ]
+  },
+  {
+    "name": "Gift and reward estimates",
+    "kind": "estimate",
+    "cadence": "one-time",
+    "source": "town-activities-audit.md#automatic-checklist-completion",
+    "review": "Interaction plus reward or supporting save evidence. Alternate acquisition and consumed or transferred rewards limit the claim.",
+    "keys": [
+      "ballonlea.eviolite", "ballonlea.revenge", "circhester.catching-charm", "circhester.fake-tears",
+      "circhester.oval-charm", "circhester.rock-tomb", "circhester.screech", "circhester.shiny-charm",
+      "hammerlocke.mr-focus", "hammerlocke.soothe-bell", "hammerlocke.weather-gifts", "motostoke.earbuds",
+      "motostoke.focus-energy", "motostoke.star-piece", "north-wild.rally-thunder-wave",
+      "north-wild.rally-volt-switch", "postwick.master-ball", "route3.berry-gift", "route9.dive",
+      "stow.beast-ball", "stow.fly", "stow.fossils", "wild-area.poke-dolls", "wyndon.rotom-catalog"
+    ]
+  },
+  {
+    "name": "Current collection, moves and provenance",
+    "kind": "collection",
+    "cadence": "possession",
+    "source": "town-activities-audit.md#saved-progress",
+    "review": "Uses present Bag, party/Box or Dex state. Provenance and interaction checks apply where the row names the source.",
+    "keys": [
+      "battle-tower.hyper-training", "battle-tower.master-ribbon", "battle-tower.memories",
+      "battle-tower.type-null", "circhester.draco-meteor", "hammerlocke.effort-ribbon",
+      "hammerlocke.friendship-ribbon", "hammerlocke.pledge-tutor", "motostoke.steel-beam",
+      "power-plant.eternatus", "power-plant.zamazenta", "route1.first-catch", "route2.first-catch",
+      "route5.rotom-bike", "route5.toxel", "route6.fossil.arctovish", "route6.fossil.arctozolt",
+      "route6.fossil.dracovish", "route6.fossil.dracozolt", "route9.bike-water-mode", "stow.antique-polteageist",
+      "stow.phony-polteageist", "weald.sonia-book", "wyndon.starter-tutor"
+    ]
+  },
+  {
+    "name": "Current Nursery and outfit state",
+    "kind": "saved-state",
+    "cadence": "repeatable",
+    "source": "town-activities-audit.md#nursery-visits-and-hatching",
+    "review": "Current deposits and installed outfit color can change independently of historical actions.",
+    "keys": [
+      "north-wild.nursery-deposit", "route5.nursery-deposit", "wild-area.bike-outfit"
+    ]
+  },
+  {
+    "name": "Daily player marks",
+    "kind": "player-mark",
+    "cadence": "daily",
+    "source": "batch-3-tracking-audit.md#daily-persistence",
+    "review": "Outcome flags have no established outcome-date pairing. The saved buyer status also requires a valid typed request. Nine local daily marks cover restart, past/future date tags and save restore.",
+    "keys": [
+      "circhester.morimoto-rematch", "hammerlocke.cafe", "motostoke.battle-cafe", "spikemuth.marnie-daily",
+      "stow.bargain", "stow.buyer", "turffield.loto-id", "wyndon.cafe", "wyndon.tournament-reward"
+    ]
+  },
+  {
+    "name": "Repeatable player marks",
+    "kind": "player-mark",
+    "cadence": "repeatable",
+    "source": "batch-3-tracking-audit.md#side-events-and-battle-outcomes",
+    "review": "The inspected Chloe AMX call graph has no own-result writer. The shared native Trainer writer retains result-path and rematch-lifetime limits. Rental selection is active context. General wins do not identify a rental outcome.",
+    "keys": [
+      "battle-tower.rental-team", "wild-area.chloe"
+    ]
+  },
+  {
+    "name": "One-time player marks",
+    "kind": "player-mark",
+    "cadence": "one-time",
+    "source": "batch-3-tracking-audit.md#side-events-and-battle-outcomes",
+    "review": "Applin actor-key lifetime and generic deletion remain ambiguous. The Maximizers performance writes temporary state in the inspected script. Retain eligibility/directions and explicit marks.",
+    "keys": [
+      "hammerlocke.applin", "hulbury.maximizers"
+    ]
+  }
+ ]
+}

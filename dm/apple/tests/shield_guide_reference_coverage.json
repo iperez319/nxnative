@@ -1,0 +1,270 @@
+{
+  "source": "Official Pokémon Sword/Shield guide, supplied OCR; base Shield 1.3.2",
+  "sourceSHA256": "66d588d05953a27e817ce5fc63c4df1681e99d8995b3cc6ae3b26adb98a8fd73",
+  "scope": "Textual handbook and factual table members; original artwork, image-only map pins, Sword/DLC gameplay, networking and event rotations excluded.",
+  "families": [
+    {
+      "family": "Getting started",
+      "pages": "2–30",
+      "categories": [
+        "Getting started"
+      ]
+    },
+    {
+      "family": "Battle preparation and mechanics",
+      "pages": "162–192",
+      "categories": [
+        "Battle mechanics",
+        "Battle reference tables"
+      ]
+    },
+    {
+      "family": "Champion Tournaments",
+      "pages": "196–199",
+      "categories": [
+        "Tournament teams",
+        "Tournament prizes"
+      ]
+    },
+    {
+      "family": "Battle Tower and rental teams",
+      "pages": "200–205",
+      "categories": [
+        "Rental teams"
+      ]
+    },
+    {
+      "family": "Gigantamax Pokémon",
+      "pages": "216–229",
+      "categories": [
+        "G-Max moves"
+      ]
+    },
+    {
+      "family": "Ribbons, Marks and titles",
+      "pages": "230–233",
+      "categories": [
+        "Ribbons and Marks"
+      ]
+    },
+    {
+      "family": "Nursery, breeding and Egg Groups",
+      "pages": "234–240",
+      "categories": [
+        "Nursery mechanics",
+        "Nursery incense",
+        "Egg Groups"
+      ]
+    },
+    {
+      "family": "Poké Jobs",
+      "pages": "241–248",
+      "categories": [
+        "Poké Jobs",
+        "Poké Job tiers",
+        "Poké Job offerings"
+      ]
+    },
+    {
+      "family": "Wild Area",
+      "pages": "249–279",
+      "categories": [
+        "Wild Area services",
+        "Watt Traders",
+        "Ingredients — Rolling Fields",
+        "Ingredients — Hammerlocke Hills",
+        "Digging Duo — skill brother",
+        "Digging Duo — stamina brother",
+        "Fishers",
+        "Hikers"
+      ]
+    },
+    {
+      "family": "Camping, friendship and cooking",
+      "pages": "280–289",
+      "categories": [
+        "Camping",
+        "Friendship tiers",
+        "Cooking ingredients",
+        "Curry quality",
+        "Berry flavors"
+      ]
+    },
+    {
+      "family": "Berry trees",
+      "pages": "290–293",
+      "categories": [
+        "Berry trees"
+      ]
+    },
+    {
+      "family": "Camping with others",
+      "pages": "295–297",
+      "categories": [
+        "Camping with others",
+        "NPC camps"
+      ]
+    },
+    {
+      "family": "League Cards and Card Maker",
+      "pages": "301–312",
+      "categories": [
+        "League Cards",
+        "Card backgrounds",
+        "Card effects",
+        "Card frames",
+        "Card expressions",
+        "Card poses",
+        "Card coatings"
+      ]
+    },
+    {
+      "family": "Appearance, outfits and boutiques",
+      "pages": "313–334",
+      "categories": [
+        "Appearance",
+        "Salon choices"
+      ]
+    },
+    {
+      "family": "Move encyclopedia",
+      "pages": "336–351",
+      "categories": [
+        "Moves"
+      ]
+    },
+    {
+      "family": "Priority move index",
+      "pages": "352",
+      "categories": [
+        "Move priority"
+      ]
+    },
+    {
+      "family": "Max and G-Max move reference",
+      "pages": "353",
+      "categories": [
+        "Max moves",
+        "G-Max moves"
+      ]
+    },
+    {
+      "family": "Abilities and Pickup rewards",
+      "pages": "359–364",
+      "categories": [
+        "Abilities",
+        "Pickup"
+      ]
+    },
+    {
+      "family": "Natures",
+      "pages": "365",
+      "categories": [
+        "Natures"
+      ]
+    },
+    {
+      "family": "Characteristics",
+      "pages": "365",
+      "categories": [
+        "Characteristics"
+      ]
+    },
+    {
+      "family": "Base points from wild Pokémon",
+      "pages": "366–369",
+      "categories": [
+        "EV yields"
+      ]
+    },
+    {
+      "family": "Item encyclopedia",
+      "pages": "370–380",
+      "categories": [
+        "Items"
+      ]
+    },
+    {
+      "family": "Shops",
+      "pages": "381–382",
+      "categories": [
+        "Shops"
+      ]
+    },
+    {
+      "family": "Type matchup chart",
+      "pages": "383",
+      "categories": [
+        "Type matchups"
+      ]
+    }
+  ],
+  "categoryCounts": {
+    "Abilities": 196,
+    "Appearance": 1,
+    "Battle mechanics": 11,
+    "Battle reference tables": 18,
+    "Berry flavors": 53,
+    "Berry trees": 29,
+    "Camping": 3,
+    "Camping with others": 2,
+    "Card backgrounds": 66,
+    "Card coatings": 9,
+    "Card effects": 20,
+    "Card expressions": 30,
+    "Card frames": 20,
+    "Card poses": 20,
+    "Characteristics": 30,
+    "Cooking ingredients": 25,
+    "Curry quality": 5,
+    "Digging Duo — skill brother": 21,
+    "Digging Duo — stamina brother": 31,
+    "EV yields": 400,
+    "Egg Groups": 400,
+    "Fishers": 7,
+    "Friendship tiers": 8,
+    "G-Max moves": 23,
+    "Getting started": 6,
+    "Hikers": 13,
+    "Ingredients — Hammerlocke Hills": 16,
+    "Ingredients — Rolling Fields": 17,
+    "Items": 375,
+    "League Cards": 1,
+    "Max moves": 19,
+    "Move priority": 12,
+    "Moves": 547,
+    "NPC camps": 8,
+    "Natures": 25,
+    "Nursery incense": 6,
+    "Nursery mechanics": 3,
+    "Pickup": 30,
+    "Poké Job offerings": 157,
+    "Poké Job tiers": 10,
+    "Poké Jobs": 1,
+    "Rental teams": 30,
+    "Ribbons and Marks": 49,
+    "Salon choices": 69,
+    "Shops": 174,
+    "Tournament prizes": 30,
+    "Tournament teams": 30,
+    "Type matchups": 18,
+    "Watt Traders": 10,
+    "Wild Area services": 1
+  },
+  "supplementaryChecks": [
+    "PKHeX.Core 26.10.18.0 immutable Gen8 personal/move tables: all 400 Galar species EVs/Egg Groups and all 547 printed move names/types/PP; explicit Galar forms and female Indeedee.",
+    "https://www.serebii.net/swordshield/championcuprematch.shtml — missing portrait identities, level/move/item facts; Shield teams and original levels only.",
+    "https://www.serebii.net/swordshield/pokejobs.shtml — missing type/tier icons; 151 employer jobs plus six seminars.",
+    "https://bulbapedia.bulbagarden.net/wiki/Pickup — ten level-band labels.",
+    "https://www.serebii.net/swordshield/ingredients.shtml — missing ingredient rarity icons.",
+    "https://www.serebii.net/swordshield/marks.shtml — night condition."
+  ],
+  "corrections": [
+    "Rental tables’ shifted EV-focus row aligned to all six members.",
+    "Headerless Mart tables retain first products; actual town headings used.",
+    "Galarian Meowth, Corsola and female Indeedee use regional/sex-specific EVs.",
+    "Dynamax Cannon and Pyro Ball base PP corrected to 5.",
+    "The first seven hair-color cells are retained."
+  ],
+  "presentation": "Mac and iOS: offline entry point, category selection, full-text multiword search, 25-result pages, selectable detail text and printed citations. No save required; no checkoffs added."
+}

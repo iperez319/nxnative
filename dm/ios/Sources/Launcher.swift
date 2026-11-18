@@ -1,7 +1,7 @@
 // Launcher: the settings screen shown before the game starts (front_ios.m dm_show_launcher). Its settings come from the app's dm/launcher.json (an app of several programs: dm/p<N>/launcher.json), which build_ipa.sh writes for this game
 // from dm/games/settings.tsv (dm/games/settings.py): each sets an environment variable the host reads when the game starts. A variable an env file set (Documents/env.txt, the bundle's
 // dm/env.txt; main.m lists them in DM_ENV_FILE_KEYS) is shown but kept. All settings share one screen, grouped by section (rows: LauncherRow.swift). Choices that differ from the game's default are kept
-// in UserDefaults; Reset to tested defaults shows the defaults, and Play then forgets them. DM_LAUNCHER=0 in Documents/env.txt starts the game at once with the saved choices; DM_SAVED_CHOICES=0 ignores them (and keeps them)
+// in UserDefaults; Reset to tested defaults shows the defaults, and Play then forgets them. DM_LAUNCHER=0 in Documents/env.txt starts the game at once with the saved choices; the save gate remains available; DM_SAVED_CHOICES=0 ignores them (and keeps them)
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -94,8 +94,11 @@ private struct DocumentPicker: UIViewControllerRepresentable {
 
 private struct LauncherView: View {
     @ObservedObject var m: LauncherModel
-    let play: () -> Void
+    let ready: () -> Void
+    let launch: () -> Void
     @State private var memory = os_proc_available_memory()
+    @StateObject private var saves = SaveModel()
+    @State private var didOpen = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -114,36 +117,52 @@ private struct LauncherView: View {
                 }
                 .padding(16)
                 .frame(width: geometry.size.width / 3, height: geometry.size.height)
-                List {
-                    ForEach(m.sections, id: \.self) { section in
-                        let rows = m.rows(in: section)
-                        if !rows.isEmpty {
-                            Section(section) {
-                                ForEach(rows) { SettingRow(s: $0, m: m) }
+                ScrollViewReader { proxy in
+                    List {
+                        SaveSection(model: saves).id("saves")
+                        ForEach(m.sections, id: \.self) { section in
+                            let rows = m.rows(in: section)
+                            if !rows.isEmpty {
+                                Section(section) {
+                                    ForEach(rows) { SettingRow(s: $0, m: m) }
+                                }
+                            }
+                        }
+                        Section {
+                            Button("Reset to tested defaults") { m.reset() }
+                                .disabled(!m.changed)
+                        } footer: {
+                            Text("Brings back all settings this game was tested with.")
+                        }
+                        CloudSavesSection()
+                        Section("Controllers") {
+                            Button("Connect iPhone") { dm_phone_controller_show() }
+                            Text("Use nx Controller on your iPhone as player 1. Pair over local Wi-Fi or experimental Bluetooth.").font(.footnote).foregroundStyle(.secondary)
+                        }
+                        Section {
+                            HStack {
+                                Text("Memory available")
+                                Spacer()
+                                Text(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory)).monospacedDigit().foregroundStyle(.secondary)
                             }
                         }
                     }
-                    Section {
-                        Button("Reset to tested defaults") { m.reset() }
-                            .disabled(!m.changed)
-                    } footer: {
-                        Text("Brings back all settings this game was tested with.")
-                    }
-                    CloudSavesSection()
-                    Section {
-                        HStack {
-                            Text("Memory available")
-                            Spacer()
-                            Text(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory)).monospacedDigit().foregroundStyle(.secondary)
-                        }
+                    .listStyle(.insetGrouped)
+                    .contentMargins(.horizontal, 12, for: .scrollContent)
+                    .onChange(of: saves.page?.token) {
+                        if !saves.atMenu { proxy.scrollTo("saves", anchor: .top) }
                     }
                 }
-                .listStyle(.insetGrouped)
-                .contentMargins(.horizontal, 12, for: .scrollContent)
                 .frame(width: geometry.size.width * 2 / 3)
             }
         }
         .preferredColorScheme(.dark)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DMSaveLauncherLaunch"))) { _ in launch() }
+        .onAppear {
+            guard !didOpen else { return }
+            didOpen = true
+            ready()
+        }
         .task {
             while !Task.isCancelled {
                 memory = os_proc_available_memory()
@@ -153,7 +172,8 @@ private struct LauncherView: View {
     }
 
     @ViewBuilder var playButton: some View {
-        let button = Button(action: play) { Text("Play").font(.title3.weight(.semibold)).frame(maxWidth: 220) }.controlSize(.large)
+        let button = Button { saves.send("play") } label: { Text(saves.atMenu ? "Play" : saves.busy ? "Please wait…" : "Choose a save").font(.title3.weight(.semibold)).frame(maxWidth: 220) }
+            .controlSize(.large).disabled(!saves.atMenu)
         if #available(iOS 26.0, *) { button.buttonStyle(.glassProminent) } else { button.buttonStyle(.borderedProminent) }
     }
 
@@ -177,12 +197,16 @@ public func dmShowLauncher(_ viewController: UnsafeMutableRawPointer, _ done: @c
     if ProcessInfo.processInfo.environment["DM_LAUNCHER"] == "0" { fputs("launcher: off (DM_LAUNCHER=0)\n", stderr); model.applySaved(); return false }
     let parent = Unmanaged<UIViewController>.fromOpaque(viewController).takeUnretainedValue()
     var host: UIViewController?
-    let view = LauncherView(m: model) {
+    let view = LauncherView(m: model, ready: {
+        guard let h = host else { return }
+        NotificationCenter.default.post(name: Notification.Name("DMSaveLauncherReady"), object: h)
+    }, launch: {
+        // Reconciliation has finished; apply settings before releasing the guest.
         guard let h = host else { return }
         host = nil
         model.apply()
         h.dismiss(animated: false) { done() }
-    }
+    })
     let h = DmHostingController(rootView: view)
     h.modalPresentationStyle = .fullScreen
     host = h

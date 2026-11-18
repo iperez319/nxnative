@@ -136,3 +136,21 @@ Most commits have none, and commits from before this section have none either. A
 ## What a front end cannot see yet
 
 While a game runs, the host says what happens only in its log, as text meant for people: a controller that connects or goes away, the preparing of shaders before the first frame, a red line. A front end that reads the log to show these would break when a line's wording changes. Events a program can read (one JSON object per line, as the NSP script's) would be the next piece of this interface; until then, treat log lines as diagnostics, not as an interface.
+
+## Phone controller receiver
+
+Front-ends: shared hosts link Network, CoreBluetooth and CoreImage plus
+`dm/apple/controller/` and `dm/apple/controller_host/`. Receiver bundles declare
+`NSLocalNetworkUsageDescription`, `NSBonjourServices` (`_nxcontrol._tcp`) and
+`NSBluetoothAlwaysUsageDescription`. The Makefile and generated iOS project
+already carry these dependencies. Existing packages must be rebuilt.
+
+Use `DMControllerHost` on the main queue for explicit pairing and teardown.
+`dm_input_remote_owner` selects player 1 exclusively; `dm_input_remote_set`
+publishes only validated session input and preserves press edges. Slot mappings
+stay with their physical controllers. Host UI must call
+`dm_input_remote_block`; app focus loss must stop the session. Leaving pairing
+calls `endPairing`, keeping an established connection but cancelling an unused
+invitation. The built-in iOS and Mac menus implement those rules. The Mac
+launcher requests pairing in the new host using `DM_PHONE_PAIR_AT_START=1`.
+See [Phone controller](../dm/controller/README.md) for user flow and checks.

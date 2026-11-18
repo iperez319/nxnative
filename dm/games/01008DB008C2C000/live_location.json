@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "title": "01008DB008C2C000",
+  "build": "a16802625e7826bf83b6f9708e475b91",
+  "status": "research",
+  "primary": {
+    "root": "0x2961d98",
+    "vtable_field": "0x0",
+    "vtable": "0x255ff68",
+    "area_field": "0x48",
+    "zone_field": "0x50"
+  },
+  "mirror": {
+    "root": "0x26364f0",
+    "pointers": ["0x1c0"],
+    "vtable_field": "0x48",
+    "vtable": "0x25a9d70",
+    "zone_field": "0x68"
+  },
+  "areas": {
+    "9A3DF7D37DB70B41": {
+      "name": "a_0101",
+      "zones": {
+        "019B5DC049D8CB3E": "Postwick",
+        "078BC1FF1A657844": "Route 1",
+        "E80BCEC03B7D6E23": "Wedgehurst",
+        "10355EFF1F4DB0B5": "Route 2",
+        "10355BFF1F4DAB9C": "Route 2"
+      }
+    },
+    "DF864AE11FD1F74F": {
+      "name": "a_d0101",
+      "zones": {"8F67CD45F405D66E": "Slumbering Weald"}
+    },
+    "B6F6DA200E8FFE23": {
+      "name": "a_t0101_i0101",
+      "kind": "interior",
+      "zones": {"C4811BAAA2CB7B86": {"name": "z_t0101_i0101", "interior_name": null}},
+      "exterior": {"area_id": "9A3DF7D37DB70B41", "zone_id": "019B5DC049D8CB3E"},
+      "evidence": "placement.gfpak member 148: Postwick place-name key; exit names a_0101 and destination zone z_t0101."
+    },
+    "D08669201CEB5B3E": {
+      "name": "a_t0101_i0201",
+      "kind": "interior",
+      "zones": {"A9AB2CAA935AB8AB": {"name": "z_t0101_i0201", "interior_name": "Hop's house"}},
+      "exterior": {"area_id": "9A3DF7D37DB70B41", "zone_id": "019B5DC049D8CB3E"},
+      "evidence": "placement.gfpak member 149: Postwick place-name key and exit to z_t0101. User independently confirmed Hop's house during the recorded live interior sample."
+    },
+    "D08668201CEB598B": {
+      "name": "a_t0101_i0202",
+      "kind": "interior",
+      "zones": {"A9AB2DAA935ABA5E": {"name": "z_t0101_i0202", "interior_name": null}},
+      "exterior": {"area_id": "9A3DF7D37DB70B41", "zone_id": "019B5DC049D8CB3E"},
+      "evidence": "placement.gfpak member 150: Postwick place-name key; reciprocal warp to a_t0101_i0201, whose exit resolves specifically to z_t0101."
+    }
+  },
+  "evidence": {
+    "primary_global_relocation": "GOT main+0x26202a0 relocates to main+0x2961d98",
+    "primary_global_use": "main+0xdbef40 loads the global through that GOT slot and passes its object to main+0xdcb430",
+    "zone_store": "main+0xdcb83c: str x8, [x19, #0x50]",
+    "scope": "Shield 1.3.2 Mac research. Tested in three processes with different main bases, unsaved Postwick/Route 1 crossings, title screen and Hop's house. Three Postwick interiors now have static area/zone and exterior mappings; only the named Hop's house pair has a user-confirmed live interior sample. Other interiors and broader loading/menu/restore/region coverage remain open."
+  }
+}

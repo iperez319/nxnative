@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 void *dm_game_menu(void);   // GameMenu.swift: a retained UIMenu, rebuilt each time it opens
+void dm_phone_controller_show(void);   // pairing / disconnect, available before launch and in-game
+void dm_host_present(void *parent, void *controller);   // queue a host dialog and suppress game input until it closes
 int dm_pad_layout(void);   // DmGamepad.m: 0 = 2D, 1 = 3D, 2 = Tap (DM_GAME_PAD_LAYOUT's numbers)
 bool dm_pad_layout_offered(int layout);   // Tap only in handheld mode
 void dm_pad_layout_set(int layout);   // releases every touch first, and is saved for the next start

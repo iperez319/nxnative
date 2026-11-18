@@ -73,6 +73,9 @@ Game too big to install? Build again with `--romfs separate`, and run the comman
 
 Controls, saves and settings: [Playing](docs/playing.md).
 
+**Touch controls.** Use **Menu → Controls** or the quick preset button at the top to switch layouts (including **D+**, D-pad-first 2D); the app remembers your choice. Wonder, Engage, Dread, 13 Sentinels, Link's Awakening, Ace Attorney Investigations Collection, Unicorn Overlord, Rhythm Heaven Groove, Octopath Traveler 0, Pokémon Legends: Z-A, Cuphead, Absolum, Brain Memory Training Academy, The Great Ace Attorney Chronicles, STEINS;GATE RE:BOOT, Big Brain Academy: Brain vs. Brain, Patrick's Parabox, Celeste, Raging Loop and Mario vs. Donkey Kong start in 2D, the other games in 3D (STEINS;GATE RE:BOOT's quick save is R3, in the 3D layout). In 3D, the right stick (the camera in most games) shows a ring and knob while active: swipe on the right third of the screen, starting anywhere off the buttons. In Super Mario Galaxy and Super Mario Galaxy 2, other touches outside the controls move the pointer; in Captain Toad: Treasure Tracker they touch the game's screen (touch blocks, stun enemies), and in Big Brain Academy: Brain vs. Brain too (its menus and activities).
+A connected game controller hides the touch controls and keeps every button. **Menu** remains available for controls, saves, help, and next-launch feedback/display choices. Opening host UI releases gameplay input; it does not pause or save the game.
+
 ### Switch 2 games
 
 A Switch 2 game is built from one [NUP](https://github.com/a55uka/nup) container (a `.nup` file) or a folder of its files, not from NSPs. Neither needs `prod.keys`. A game this project has no profile for is surveyed and gets a provisional profile, as NSPs do ([Port another game](docs/development.md#port-another-game)), which may not boot. You get a Mac app; iPhone and iPad are untested.
@@ -372,4 +375,4 @@ MIT ([LICENSE](LICENSE)). Third-party code keeps its own license ([dm/third_part
 
 ### Optional cloud saves
 
-Rebuilt apps include opt-in seedbox-backed save sync. See [cloud-save setup and the user-run pilot](docs/cloud-save.md). The service and client are pending real-device validation.
+Rebuilt apps include opt-in seedbox-backed save sync. See [cloud-save setup and the user-run pilot](docs/cloud-save.md). The service and client are pending real-device validation. On mobile, **Sync now** in **Game menu → Saves and backups** checks the saved revision against the cloud head and shows **Ready for another device** when confirmed. Mac uses **Prepare to switch devices**. Local `.nxsave` export works without pairing; import and history restore are available before launch only.

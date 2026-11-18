@@ -26,6 +26,8 @@
 #include "home_quit.h"
 #include "home_quit_mac.h"
 #include "ctrl_prompt.h"
+void dm_phone_controller_mac_menu(NSMenu *bar, NSWindow *game);
+void dm_shield_guide_mac_menu(NSMenu *bar);
 #include <signal.h>
 #include <math.h>
 #include <sys/stat.h>
@@ -309,6 +311,7 @@ static void pads_reread(void) {
 }
 static void hq_close(void);
 static void input_release(void) {
+    dm_input_remote_block(1);
     hq_close();   // the prompt or the hold indicator, if one is up: the Games app the system opens for Home takes the focus too
     [NSCursor setHiddenUntilMouseMoves:NO];
     display_awake(0);
@@ -319,6 +322,7 @@ static void input_release(void) {
     pads_release();
 }
 static void input_resume(void) {
+    dm_input_remote_block(0);
     display_awake(1);
     g_input_on = 1;
     dm_motion_pro_active(1);
@@ -1482,6 +1486,8 @@ void front_run(void (*guest)(void)) {
         // Cheats menu has been opened once. Every open rebuilds them through the delegate as before
         [g_cheats_menu menuNeedsUpdate:cm];
         [[bar addItemWithTitle:@"Cheats" action:nil keyEquivalent:@""] setSubmenu:cm];
+        dm_phone_controller_mac_menu(bar, win);
+        dm_shield_guide_mac_menu(bar);
         if (getenv("DM_CHEATS_WINDOW") && atoi(getenv("DM_CHEATS_WINDOW")))   // the Cheats panel open from the start (beside the game, not key)
             dispatch_async(dispatch_get_main_queue(), ^{ [g_cheats_menu showPanel:nil]; });
         [[bar addItemWithTitle:@"Window" action:nil keyEquivalent:@""] setSubmenu:wm];
@@ -1533,6 +1539,8 @@ void front_run(void (*guest)(void)) {
         // Lifecycle (hle.h / dm.h): focus lost → 2, focus regained → 1; minimized → 3 + audio paused + GPU suspended, restored → resume (followed by focus regained → 1).
         // Input is released when the window stops being key (and when it is minimized) and taken up again when it is key again
         NSNotificationCenter *nc = NSNotificationCenter.defaultCenter;
+        [nc addObserverForName:NSMenuDidBeginTrackingNotification object:nil queue:nil usingBlock:^(NSNotification *n) { dm_input_remote_block(1); }];
+        [nc addObserverForName:NSMenuDidEndTrackingNotification object:nil queue:nil usingBlock:^(NSNotification *n) { dm_input_remote_block(!g_input_on); }];
         [nc addObserverForName:NSWindowDidChangeScreenNotification object:win queue:nil usingBlock:^(NSNotification *n) { (void)n; screen_refresh(win.screen); if (win.screen) g_layer.contentsScale = win.backingScaleFactor; screen_match_apply(); }];
         [nc addObserverForName:NSApplicationDidChangeScreenParametersNotification object:nil queue:nil usingBlock:^(NSNotification *n) { (void)n; screen_refresh(win.screen); }];
         // Entering and leaving fullscreen: the layer is layer-backed, so its frame (and with it the drawable) follows the

@@ -125,6 +125,9 @@ def info_plist(a, minos, icon):
          'CFBundleInfoDictionaryVersion': '6.0', 'LSMinimumSystemVersion': minos, 'LSArchitecturePriority': ['arm64'], 'NSHighResolutionCapable': True,
          'LSApplicationCategoryType': a.category or 'public.app-category.games', 'LSSupportsGameMode': False, 'DMTitleID': a.title_id.upper(), 'DMRomfsMarker': a.marker or '', 'DMLanguage': a.lang or 'en-US'}
     if icon: p['CFBundleIconFile'] = 'AppIcon'
+    p['NSLocalNetworkUsageDescription'] = 'Connect an iPhone as player 1 over your local network without internet.'
+    p['NSBluetoothAlwaysUsageDescription'] = 'Connect an iPhone controller directly over Bluetooth for experimental offline play.'
+    p['NSBonjourServices'] = ['_nxcontrol._tcp']
     if a.settings:
         listed = json.loads(Path(a.settings).read_text(encoding='utf-8'))['settings']
         p['DMSettings'] = settings_rules(listed)

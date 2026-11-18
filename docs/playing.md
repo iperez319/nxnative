@@ -16,6 +16,20 @@ A connected game controller hides the touch controls, all but the gear, and keep
 
 In portrait (an iPad, an iPhone Duo's inner screen) the picture sits above the controls; so it does on a Duo half folded, the picture on the upper half. An iPad game also runs in a window of any size (Stage Manager).
 
+## iPhone as a wireless controller
+
+Rebuilt iPad and Mac games offer **Controllers → Connect iPhone / disconnect**.
+The iPad start screen has **Connect iPhone**; the Mac start screen has **Connect
+iPhone and play**. Enable pairing, select local Wi-Fi or experimental Bluetooth,
+and scan the private QR from the standalone **nx Controller** phone app. The
+phone becomes player 1; the receiver keeps Menu accessible and restores local
+controls on disconnect. Test buttons in pairing, then close host UI to play.
+
+This integration still needs physical gameplay acceptance. Bluetooth is
+experimental; Mac Bluetooth has not been device-qualified. Each connection needs
+a new invitation. Menus suppress input; they do not pause or save. Setup,
+limitations and controller builds: [Phone controller](../dm/controller/README.md).
+
 ## Rumble
 
 Game vibration uses the iPhone's haptic engine or a compatible connected controller. Controllers with separate left/right haptic outputs keep those effects separate. The settings screen's **Game rumble** and **Rumble strength** control it independently of **Touch feedback**. Phone rumble approximates the Switch's effects; physical feel and controller compatibility still need device testing.

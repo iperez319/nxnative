@@ -32,7 +32,15 @@ _Static_assert(sizeof(NpadState) == 0x28, "NpadState");
 // their own path because a connected controller publishes its whole state on every change (a DualShock 4's sticks change all the time), which overwrote them on the shared one;
 // the separate paths also keep scripted input out of DM_REC, which records the physical ones (rec_read)
 static _Atomic uint64_t g_btn, g_axes, g_latch, g_sc_btn, g_sc_axes, g_sc_latch, g_pad_btn[DM_PLAYERS], g_pad_axes[DM_PLAYERS], g_pad_latch[DM_PLAYERS];
-static _Atomic uint64_t g_peek_latch;   // presses since the last dm_input_peek (the applet's reader)
+static _Atomic uint64_t g_peek_latch, g_sc_peek, g_pad_peek[DM_PLAYERS];
+// Serialize ownership changes with publication and snapshots. Transport callbacks
+// never share physical-pad storage. Separate peek latches let a disconnect drop
+// only the phone's pending presses, preserving other players' applet input.
+static pthread_mutex_t g_input_mu = PTHREAD_MUTEX_INITIALIZER;
+static _Atomic int g_remote_on;
+static int g_remote_block;
+static uint64_t g_remote_btn, g_remote_axes, g_remote_latch, g_remote_peek;
+static uint64_t g_remote_arrival_ns;
 static _Atomic int g_hold;              // an applet holds the input (dm_input_hold)
 static _Atomic int64_t g_sampling = 1 << 16;   // starts high so the history entries below the newest keep positive sampling numbers
 static uint64_t pack(int32_t lx, int32_t ly, int32_t rx, int32_t ry) {
@@ -52,30 +60,82 @@ static void shake_note(void) {
     else { uint64_t t0 = atomic_load(&g_shake_t0); atomic_store(&g_shake_end, t0 + ((t - t0) / SHAKE_CYCLE_NS + 1) * SHAKE_CYCLE_NS); }
 }
 void dm_input_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int32_t ry) {
+    pthread_mutex_lock(&g_input_mu);
+    if (atomic_load(&g_remote_on)) { pthread_mutex_unlock(&g_input_mu); return; }
     uint64_t old = atomic_exchange(&g_btn, buttons); atomic_fetch_or(&g_latch, buttons & ~old); atomic_fetch_or(&g_peek_latch, buttons & ~old); atomic_store(&g_axes, pack(lx, ly, rx, ry));
     shake_note();
+    pthread_mutex_unlock(&g_input_mu);
 }
 void dm_pad_set_player(int p, uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int32_t ry) {
     if (p < 0 || p >= DM_PLAYERS) return;
-    uint64_t old = atomic_exchange(&g_pad_btn[p], buttons); atomic_fetch_or(&g_pad_latch[p], buttons & ~old); atomic_fetch_or(&g_peek_latch, buttons & ~old); atomic_store(&g_pad_axes[p], pack(lx, ly, rx, ry));
+    pthread_mutex_lock(&g_input_mu);
+    if (!p && atomic_load(&g_remote_on)) { pthread_mutex_unlock(&g_input_mu); return; }
+    uint64_t old = atomic_exchange(&g_pad_btn[p], buttons); atomic_fetch_or(&g_pad_latch[p], buttons & ~old); atomic_fetch_or(&g_pad_peek[p], buttons & ~old); atomic_store(&g_pad_axes[p], pack(lx, ly, rx, ry));
     if (!p) shake_note();
+    pthread_mutex_unlock(&g_input_mu);
+}
+static void remote_clear(void) { g_remote_btn = g_remote_axes = g_remote_latch = g_remote_peek = g_remote_arrival_ns = 0; }
+// The session watchdog runs on the Apple main queue. A busy host UI must not
+// hold a button in the guest while that queue is stalled: HID readers enforce
+// the same 200 ms arrival deadline independently, on the receiver's own clock.
+static void remote_expire(void) {
+    if (g_remote_arrival_ns && now_ns() - g_remote_arrival_ns >= 200000000ull) remote_clear();
+}
+int dm_input_remote_owned(void) { return atomic_load(&g_remote_on); }
+void dm_input_remote_owner(int on) {
+    pthread_mutex_lock(&g_input_mu);
+    if (atomic_exchange(&g_remote_on, !!on) != !!on) {
+        remote_clear();
+        atomic_store(&g_btn, 0); atomic_store(&g_axes, 0); atomic_store(&g_latch, 0); atomic_store(&g_peek_latch, 0);
+        atomic_store(&g_sc_btn, 0); atomic_store(&g_sc_axes, 0); atomic_store(&g_sc_latch, 0); atomic_store(&g_sc_peek, 0);
+        atomic_store(&g_pad_btn[0], 0); atomic_store(&g_pad_axes[0], 0); atomic_store(&g_pad_latch[0], 0); atomic_store(&g_pad_peek[0], 0);
+        atomic_store(&g_shake_on, 0); atomic_store(&g_shake_end, 0);
+    }
+    pthread_mutex_unlock(&g_input_mu);
+}
+void dm_input_remote_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int32_t ry) {
+    pthread_mutex_lock(&g_input_mu);
+    if (atomic_load(&g_remote_on) && !g_remote_block) {
+        buttons &= 0xffffull;
+        g_remote_latch |= buttons & ~g_remote_btn; g_remote_peek |= buttons & ~g_remote_btn;
+        g_remote_btn = buttons; g_remote_axes = pack(lx, ly, rx, ry);
+        g_remote_arrival_ns = now_ns();
+    }
+    pthread_mutex_unlock(&g_input_mu);
+}
+void dm_input_remote_block(int on) {
+    pthread_mutex_lock(&g_input_mu);
+    if (g_remote_block != !!on) { g_remote_block = !!on; remote_clear(); }
+    pthread_mutex_unlock(&g_input_mu);
 }
 static int32_t pick(int32_t a, int32_t b);
 static int32_t ax(uint64_t v, int i);
 void dm_input_hold(int on) {
-    if (atomic_exchange(&g_hold, on) == on) return;
+    pthread_mutex_lock(&g_input_mu);
+    if (atomic_exchange(&g_hold, on) == on) { pthread_mutex_unlock(&g_input_mu); return; }
+    g_remote_latch = 0;
     atomic_store(&g_latch, 0); atomic_store(&g_sc_latch, 0); for (int p = 0; p < DM_PLAYERS; p++) atomic_store(&g_pad_latch[p], 0);   // a press made for the applet is not the game's
+    pthread_mutex_unlock(&g_input_mu);
 }
 void dm_input_peek(uint64_t *buttons, int32_t axes[4]) {
-    uint64_t b = atomic_load(&g_btn) | atomic_load(&g_sc_btn) | atomic_exchange(&g_peek_latch, 0), k = atomic_load(&g_axes), c = atomic_load(&g_sc_axes);
+    pthread_mutex_lock(&g_input_mu);
+    remote_expire();
+    int remote = atomic_load(&g_remote_on);
+    uint64_t b = remote ? g_remote_btn | g_remote_peek : atomic_load(&g_btn) | atomic_load(&g_sc_btn) | atomic_exchange(&g_peek_latch, 0) | atomic_exchange(&g_sc_peek, 0);
+    uint64_t k = remote ? g_remote_axes : atomic_load(&g_axes), c = remote ? 0 : atomic_load(&g_sc_axes);
+    g_remote_peek = 0;
     for (int i = 0; i < 4; i++) axes[i] = pick(ax(k, i), ax(c, i));
-    for (int p = 0; p < DM_PLAYERS; p++) { b |= atomic_load(&g_pad_btn[p]); uint64_t v = atomic_load(&g_pad_axes[p]); for (int i = 0; i < 4; i++) axes[i] = pick(axes[i], ax(v, i)); }
+    for (int p = remote ? 1 : 0; p < DM_PLAYERS; p++) { b |= atomic_load(&g_pad_btn[p]) | atomic_exchange(&g_pad_peek[p], 0); uint64_t v = atomic_load(&g_pad_axes[p]); for (int i = 0; i < 4; i++) axes[i] = pick(axes[i], ax(v, i)); }
     *buttons = b & 0xffffull;
+    pthread_mutex_unlock(&g_input_mu);
 }
 void dm_pad_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int32_t ry) { dm_pad_set_player(0, buttons, lx, ly, rx, ry); }
 static void script_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int32_t ry) {
-    uint64_t old = atomic_exchange(&g_sc_btn, buttons); atomic_fetch_or(&g_sc_latch, buttons & ~old); atomic_fetch_or(&g_peek_latch, buttons & ~old); atomic_store(&g_sc_axes, pack(lx, ly, rx, ry));
+    pthread_mutex_lock(&g_input_mu);
+    if (atomic_load(&g_remote_on)) { pthread_mutex_unlock(&g_input_mu); return; }
+    uint64_t old = atomic_exchange(&g_sc_btn, buttons); atomic_fetch_or(&g_sc_latch, buttons & ~old); atomic_fetch_or(&g_sc_peek, buttons & ~old); atomic_store(&g_sc_axes, pack(lx, ly, rx, ry));
     shake_note();
+    pthread_mutex_unlock(&g_input_mu);
 }
 uint64_t dm_input_samples(void) { return (uint64_t)atomic_load(&g_sampling); }
 // DM_KEYS scripted input (for tests): "seconds:key[+key][~hold seconds][*count/interval seconds],...", e.g. "8:A,12:A,15:Down~0.5,16:A+B,40:A*80/2" (A every 2 s from 40 s on, 80 times). Key names A B X Y LS RS L R ZL ZR (plus the sticks LLeft LUp LRight LDown and RLeft RUp RRight RDown) Plus Minus Left Up Right Down, left stick LLeft LUp LRight LDown,
@@ -433,10 +493,16 @@ static void fill(NpadState *s, uint32_t id, uint32_t style) {
     int pl = player_of(id);
     if (!(style_for_player(id, pl) & style)) return;   // no controller of this id / style: attributes = 0
     // Player 1: keyboard / touch, script, its controller and the players merged into it; another player: its own controller path
-    uint32_t src = pl ? 1u << pl : 1u | merged_players();
+    if (!pl) keys_sync();
+    pthread_mutex_lock(&g_input_mu);
+    int remote = atomic_load(&g_remote_on);
+    remote_expire();
+    uint32_t src = pl ? 1u << pl : remote ? 0 : 1u | merged_players();
     uint64_t b = 0; int32_t a[4] = {0};
-    if (!pl) {
-        keys_sync();   // DM_KEYS frame steps due in this frame, before the read
+    if (!pl && remote) {
+        b = g_remote_btn | g_remote_latch; g_remote_latch = 0;
+        for (int i = 0; i < 4; i++) a[i] = ax(g_remote_axes, i);
+    } else if (!pl) {
         b = atomic_load(&g_btn) | atomic_exchange(&g_latch, 0);
         uint64_t k = atomic_load(&g_axes); for (int i = 0; i < 4; i++) a[i] = ax(k, i);
     }
@@ -444,12 +510,13 @@ static void fill(NpadState *s, uint32_t id, uint32_t style) {
         b |= atomic_load(&g_pad_btn[p]) | atomic_exchange(&g_pad_latch[p], 0);
         uint64_t v = atomic_load(&g_pad_axes[p]); for (int i = 0; i < 4; i++) a[i] = pick(a[i], ax(v, i));
     }
-    if (!pl) {   // the physical sources so far (DM_REC records them, DM_BTN_SHAKE only from player 1's own controller and the keyboard, as shake_note), then the scripted path
+    if (!pl && !remote) {   // the physical sources so far, then the scripted path
         if (atomic_load_explicit(&g_rec_on, memory_order_relaxed)) rec_read((b & 0xffffull) | ((atomic_load(&g_btn) | atomic_load(&g_pad_btn[0])) & DM_BTN_SHAKE), a);
         b |= atomic_load(&g_sc_btn) | atomic_exchange(&g_sc_latch, 0);
         uint64_t c = atomic_load(&g_sc_axes); for (int i = 0; i < 4; i++) a[i] = pick(a[i], ax(c, i));
     }
     if (atomic_load(&g_hold)) { b = 0; memset(a, 0, sizeof a); }   // an applet is in front: the game reads nothing (the latches were taken all the same)
+    pthread_mutex_unlock(&g_input_mu);
     s->lx = a[0]; s->ly = a[1]; s->rx = a[2]; s->ry = a[3];
     b &= 0xffffull;
     if (s->lx < -STICK_THRESH) b |= 1u << 16;
@@ -470,13 +537,17 @@ static void fill(NpadState *s, uint32_t id, uint32_t style) {
 // the buttons 0..15 in NpadButton order and the sticks' directions 16..23; SL / SR (bits 24 / 25) can never fire, no
 // input source of this host reports them
 uint64_t dm_cheats_keys(void) {
+    pthread_mutex_lock(&g_input_mu);
+    remote_expire();
+    int remote = atomic_load(&g_remote_on);
     uint64_t b = 0; int32_t a[4] = {0};
-    b |= atomic_load(&g_btn);
-    for (int p = 0; p < DM_PLAYERS; p++) {
+    b |= remote ? g_remote_btn : atomic_load(&g_btn);
+    for (int p = remote ? 1 : 0; p < DM_PLAYERS; p++) {
         b |= atomic_load(&g_pad_btn[p]);
         uint64_t v = atomic_load(&g_pad_axes[p]); for (int i = 0; i < 4; i++) a[i] = pick(a[i], ax(v, i));
     }
-    uint64_t k = atomic_load(&g_axes); for (int i = 0; i < 4; i++) a[i] = pick(a[i], ax(k, i));
+    uint64_t k = remote ? g_remote_axes : atomic_load(&g_axes); for (int i = 0; i < 4; i++) a[i] = pick(a[i], ax(k, i));
+    pthread_mutex_unlock(&g_input_mu);
     b &= 0xffffull;
     if (a[0] < -STICK_THRESH) b |= 1u << 16;
     if (a[1] > STICK_THRESH) b |= 1u << 17;
@@ -632,6 +703,7 @@ static uint64_t motion_copy(live_motion *m, motion_state *out) {   // copies a s
 }
 static int motion_live(int p, motion_state *out) {
     if (p < 0 || p >= DM_PLAYERS) return 0;
+    if (!p && atomic_load(&g_remote_on)) return 0;   // v1 phone input has no motion capability
     pthread_once(&g_motion_once, motion_env);
     if (!p && g_phone_mode > 0) return motion_copy(&g_phone_motion, out) != 0;
     // Match the button path: in a one-player game, a controller in another slot also drives player 1.

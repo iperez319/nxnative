@@ -1,9 +1,11 @@
 # Settings
 
-The screen before the game starts shows the settings the game supports. A setting that only matters while another is on appears under it and disappears when that one is turned off. Tap **Play** to start; the app remembers your choices for the next start. All settings are on one scrollable screen, under **Game**, **Controls** and **Performance**. Tap a menu or move a slider there; no settings page needs opening. **Upscaling** is in **Game**, beside **Console mode**. A Mac app shows the same settings in a [window of its own](#the-mac-settings-window).
+The screen before the game starts shows the settings the game supports. A setting that only matters while another is on appears under it and disappears when that one is turned off. Tap **Play** to check saves and start; the app remembers your choices for the next start. All settings are on one scrollable screen, under **Game**, **Controls** and **Performance**. Tap a menu or move a slider there; no settings page needs opening. **Upscaling** is in **Game**, beside **Console mode**. A Mac app shows the same settings in a [window of its own](#the-mac-settings-window).
+
+The save summary shows status and an optional **Set up cloud saves** action. **More** holds backup files, cloud restore, offline play, connection settings and technical details. Any save choice required before play appears on this page.
 
 - [Tested defaults](#tested-defaults)
-- [Game](#game): [Frame rate](#frame-rate), [Render scale](#render-scale), [Console mode](#console-mode), [Upscaling](#upscaling), [Game's upscaler](#games-upscaler), [Game language](#game-language), [Picture](#picture), [Frame-rate counter](#frame-rate-counter)
+- [Game](#game): [Frame rate](#frame-rate), [Render scale](#render-scale), [Console mode](#console-mode), [Upscaling](#upscaling), [Game's upscaler](#games-upscaler), [Game language](#game-language), [Picture](#picture), [Frame-rate counter](#frame-rate-counter), [Save status indicator](#save-status-indicator)
 - [Controls](#controls): [Touch feedback](#touch-feedback), [Game rumble](#game-rumble), [Rumble strength](#rumble-strength), [Rumble cutoff](#rumble-cutoff), [Press a button to join](#press-a-button-to-join)
 - [Performance](#performance): [Frame buffering](#frame-buffering), [Metal 4 pipelines](#metal-4-pipelines), [Pipeline prebuild](#pipeline-prebuild), [Encode thread](#encode-thread), [Hold frames when late](#hold-frames-when-late), [Performance HUD](#performance-hud), [Reset to tested defaults](#reset-to-tested-defaults)
 - [The Mac settings window](#the-mac-settings-window): [Display mode](#display-mode)
@@ -87,7 +89,46 @@ Games whose profile supports it (Breath of the Wild, Animal Crossing: New Horizo
 
 Shows the frames per second at the top left.
 
+### Save status indicator
+
+Shows cloud status and circular upload activity on the game menu icon. On by
+default. Turn it off for a static, quiet menu icon; syncing and full status in
+**Saves and backups** stay available. Like the FPS switch, this applies next
+launch and is also available under **Game menu → Feedback / display**.
+
 ## Controls
+
+### In-game controls and menu
+
+On iPhone and iPad, the small **Game menu** icon beside the top controls stays
+available with a physical controller connected. It shows a circular activity
+indicator during uploads and keeps detailed save text inside the menu.
+The game continues running while it is open; opening it does not pause or save.
+**Saves and backups** opens a live save screen. **Sync now** uploads saved progress
+and checks it before a device switch; **Resume & sync** explicitly resumes paused
+uploads. Backup files and technical details are under **More**. Import, cloud
+restore and connection setup are offered before launch only.
+Host UI suppresses gameplay input, releases held touches, and resamples physical
+controllers on close. New touches are required after closing or losing focus.
+
+**Controls** offers **2D — stick**, **3D**, **Tap** (handheld only), and
+**2D — D-pad** (shown as **D+** on the quick preset button). Existing saved
+preset selections retain their meaning. Game profiles still select the initial
+preset. Presets do not change the picture or touchscreen mapping.
+
+In 3D, an unclaimed touch in the right third controls the camera; explicit buttons
+take priority. Its ring and knob appear while active, with an option to hide them.
+The first-use hint is dismissible. Left and camera sticks each offer fixed or
+floating mode. The fixed camera centre is inward of the face buttons, halfway
+down the screen. Sensitivity (0.25–2), dead zone (0–0.4), and horizontal/vertical
+camera inversion apply immediately and persist per app. These affect touch
+sticks, not physical controllers. Face-button sliding keeps its existing behavior.
+
+**Feedback / display** offers the launcher's supported rumble, touch-feedback,
+FPS, and save-status switches, explicitly marked **Applies next launch**. An environment-file
+value remains locked. These choices are unavailable when the launcher is disabled;
+use the existing environment settings in that case. Metal HUD and rumble strength
+remain prelaunch settings. **Help** describes controls, committed saves and backups.
 
 ### Touch feedback
 
@@ -264,6 +305,7 @@ A line like `DM_PRESENT_SNAP=0` in `Documents/env.txt` (in the Files app, under 
 | Picture (iPhone and iPad) | `DM_PICTURE_FIT` | `fit` 16:9 with black bars, `fill` covers the screen, cropped |
 | Picture shape | `DM_SCREEN_ASPECT` | `auto` the app window's own shape where it is taller than 16:9 (iPad 4:3, iPhone Duo 1.43:1), else 16:9 (iOS only); `1.43` the iPhone Duo's shape, `0` 16:9 |
 | Frame-rate counter | `DM_SHOW_FPS` | `1`, `0` |
+| Save status indicator | `DM_SHOW_SAVE_STATUS` | `1` (default), `0` |
 | Touch feedback | `DM_TOUCH_HAPTICS` | `1`, `0` |
 | Game rumble | `DM_RUMBLE` | `1`, `0` |
 | Rumble strength | `DM_RUMBLE_GAIN` | `0` to `3` |

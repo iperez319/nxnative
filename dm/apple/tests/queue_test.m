@@ -4,8 +4,10 @@
 #include <fcntl.h>
 void dm_fs_set_sync_callback(void (*callback)(void)) { (void)callback; }
 void dm_fs_sync_capture(void) {}
+void dm_fs_capture_with(void (*callback)(void *), void *context) { callback(context); }
+uint64_t dm_fs_commit_count(void) { return 0; }
 int main(int argc,char **argv) { @autoreleasepool {
-    assert(argc==2); NSString *base=@(argv[1]); statePath=[base stringByAppendingPathComponent:@"queue"];
+    assert(argc==2); worker=dispatch_queue_create("test.sync",DISPATCH_QUEUE_SERIAL); dispatch_queue_set_specific(worker,&workerKey,&workerKey,NULL); NSString *base=@(argv[1]); statePath=[base stringByAppendingPathComponent:@"queue"];
     NSString *capture=[base stringByAppendingPathComponent:@"capture"], *root=[capture stringByAppendingPathComponent:@"account"];
     assert([NSFileManager.defaultManager createDirectoryAtPath:root withIntermediateDirectories:YES attributes:nil error:nil]);
     assert([NSFileManager.defaultManager createDirectoryAtPath:statePath withIntermediateDirectories:YES attributes:nil error:nil]);

@@ -32,6 +32,16 @@ struct LauncherView: View {
                 settingSections(basic: true)
                 CloudSavesSection()
                 Section {
+                    Button("Connect iPhone and play") {
+                        setenv("DM_PHONE_PAIR_AT_START", "1", 1)
+                        done(true)
+                    }
+                } header: {
+                    Text("Controllers")
+                } footer: {
+                    Text("Opens pairing in the game host. Use nx Controller on your iPhone over local Wi-Fi or experimental Bluetooth.")
+                }
+                Section {
                     DisclosureGroup("Advanced settings", isExpanded: $advanced) {}
                 }
                 if advanced {

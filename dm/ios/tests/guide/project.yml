@@ -1,0 +1,63 @@
+name: ShieldGuideHarness
+options:
+  deploymentTarget:
+    iOS: '18.0'
+settings:
+  base:
+    CODE_SIGNING_ALLOWED: NO
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '1,2'
+targets:
+  ShieldGuideHarness:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - path: Production/ShieldGuide.swift
+      - path: Production/DmHostingController.swift
+      - path: Apple/shield_guide.m
+      - path: Apple/shield_guide_save.m
+      - path: Fixtures
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.nxnative.ShieldGuideHarness
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/GuideHarness.h
+        HEADER_SEARCH_PATHS: '$(SRCROOT)/Apple $(SRCROOT)/Sources $(SRCROOT)/games/01008DB008C2C000'
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Shield Guide Test
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: GuideHarnessSceneDelegate
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  ShieldGuideUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+      - path: Fixtures/release-journeys.json
+        buildPhase: resources
+    dependencies:
+      - target: ShieldGuideHarness
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.nxnative.ShieldGuideUITests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  ShieldGuideHarness:
+    build:
+      targets:
+        ShieldGuideHarness: all
+        ShieldGuideUITests: [test]
+    test:
+      targets: [ShieldGuideUITests]

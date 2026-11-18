@@ -125,7 +125,12 @@ int main(void) {
     if (!mkdtemp(root)) return 2;
     snprintf(save, sizeof save, "%s/save", root); mkdir(save, 0755);
     snprintf(path, sizeof path, "%s/a", save); put(path, "old"); setenv("DM_SAVE", save, 1);
+    snprintf(bpath, sizeof bpath, "%s/main", save); put(bpath, "old");
+    CHECK(dm_fs_open_committed_main() < 0, "guide waits for the active save mount");
     CHECK(h_fs_MountSave("save", NULL) == RES_OK, "mount transactional output");
+    int pinned = dm_fs_open_committed_main();
+    CHECK(pinned >= 0, "guide opens committed main");
+    CHECK(write_save("save:/main", "new") == RES_OK && same(bpath, "old"), "guide ignores work directory");
     // Start the process's first writes together: the save injection settings
     // must be initialized safely even though writes share a read lock.
     first_io first[8] = {0}; pthread_t first_threads[8];
@@ -145,6 +150,14 @@ int main(void) {
     CHECK(same(path, "old"), "writes remain uncommitted");
     uint64_t n = dm_fs_commit_count();
     CHECK(commit(one, 1) == RES_OK && same(path, "new"), "one-element list commits actual file bytes");
+    char saved_main[4] = {0};
+    CHECK(pinned >= 0 && pread(pinned, saved_main, 3, 0) == 3 && !strcmp(saved_main, "old"),
+          "snapshot descriptor retains old main across the swap");
+    if (pinned >= 0) close(pinned);
+    pinned = dm_fs_open_committed_main();
+    CHECK(pinned >= 0 && pread(pinned, saved_main, 3, 0) == 3 && !strcmp(saved_main, "new"),
+          "next refresh opens the new committed inode");
+    if (pinned >= 0) close(pinned);
     CHECK(dm_fs_commit_count() == n + 1, "one transaction");
     g_nmnt = 0; // Simulate a fresh mount after process restart.
     CHECK(h_fs_MountSave("save", NULL) == RES_OK, "remount committed data");

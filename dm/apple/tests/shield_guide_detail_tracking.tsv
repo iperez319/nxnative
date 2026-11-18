@@ -1,0 +1,33 @@
+family	kind	groups	rows	source	review
+alcremie	collection	7	63	town-activities-audit.md#alcremie-collection	Flavor and decoration in party or Boxes.
+alcremie-sweets	collection	7	7	town-activities-audit.md#alcremie-collection	Bag and held quantities, with acquisition directions.
+battle-tower-cycle	saved-state	2	14	town-activities-audit.md#battle-tower-records	Win milestone in the saved repeat cycle.
+battle-tower-rank	saved-state	2	20	town-activities-audit.md#battle-tower-records	Rank reached in the saved format. Reward delivery is independent.
+battle-tower-win	saved-state	2	14	town-activities-audit.md#battle-tower-records	Win threshold for a first-cycle reward.
+boutique	collection	87	1289	town-activities-audit.md#boutique-stock	Per-avatar item and color ownership. Inventory includes Style Card stock.
+cafe-prizes	reference	3	63	town-activities-audit.md#battle-café-prizes	Possible prizes and static odds per location.
+cafe-saved-state	saved-state	3	6	town-activities-audit.md#battle-café-prizes	Last committed challenge use and prize roll. Manual checkoff uses the current day.
+camping-rewards	saved-state	1	10	town-activities-audit.md#automatic-checklist-completion	Recipe threshold and award state when available. Ingredient claims require player observation.
+card-maker	saved-state	1	6	town-activities-audit.md#card-maker-backgrounds	Availability totals from unlock flags and milestones.
+card-maker-reference	reference	1	1	town-activities-audit.md#card-maker-backgrounds	Rotomi and printing fee directions.
+curry-dex	collection	26	151	town-activities-audit.md#automatic-checklist-completion	Registered recipe in any serving size.
+galar-dex	collection	16	400	town-activities-audit.md#circhesters-galar-pokédex	Species catch registration, shared by all forms.
+gigantamax	collection	1	25	town-activities-audit.md#gigantamax-collection	Gigantamax Factor on a party or Box Pokémon.
+gyms	recorded	1	8	town-activities-audit.md#gym-challenge-checklist	Each row uses its independent mission and badge records.
+league-cards	collection	1	27	shield_guide_league_cards.h	NPC card ownership in its album slot.
+local-tms	collection	27	100	town-activities-audit.md#technical-machines	Local sources and current Machines pocket ownership. Mirrors the TM case.
+market-saved-state	saved-state	1	2	town-activities-audit.md#stow-on-side-street-market	Last committed stock, request, purchase and sale state.
+market-stock	reference	2	38	town-activities-audit.md#stow-on-side-street-market	Static offers, odds, treasures and prices.
+memories	collection	1	17	town-activities-audit.md#automatic-checklist-completion	Bag and held quantities for each Memory type.
+postgame-stadiums	recorded	1	7	town-activities-audit.md#postgame-checklist	Local stadium result. Turffield also uses debrief evidence.
+raid-dens	reference	17	99	wild-area-encounters.md	Permanent base-game den selectors.
+rotom	collection	1	6	town-activities-audit.md#wyndon-rotom-catalog	Current party or Box ownership. Seen forms are also reported.
+sparkle-reward-groups	saved-state	17	124	wild-area-encounters.md	Subset and subarea totals awaiting respawn in the saved snapshot.
+sparkle-spots	saved-state	17	229	wild-area-encounters.md	Per-spot saved respawn state. Den references provide directions.
+tea	collection	1	2	town-activities-audit.md#sinistea-evolutions	Party or Box forms and matching Pot counts.
+tea-reference	reference	1	1	town-activities-audit.md#sinistea-evolutions	Where to find both Sinistea forms.
+technical-records	collection	1	100	town-activities-audit.md#technical-records	Saved Machines pocket: current quantity and past entry.
+tm-case	collection	1	100	town-activities-audit.md#technical-machines	Current Machines pocket ownership of each reusable TM.
+uniforms	collection	1	22	shield_guide_uniforms.h	All required pieces for each uniform.
+wild-encounter-groups	reference	153	1017	wild-area-encounters.md	Encounter groups by subarea, method and weather.
+wild-subarea-directions	reference	17	17	wild-area-encounters.md#batch-2-wild-area-walkthrough	Landmarks and access for each encounter subarea.

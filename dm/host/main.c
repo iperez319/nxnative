@@ -3,6 +3,7 @@
 #include "front.h"
 #include <TargetConditionals.h>
 #include "../apple/save_sync.h"
+#include "../apple/shield_guide_live.h"
 #include "../gfx/nvn/dmsh_chain.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdatomic.h>
@@ -168,6 +169,10 @@ void dm_host_preload_start(int argc, char **argv) {
     pthread_attr_t a; pthread_attr_init(&a); pthread_attr_setstacksize(&a, 8 << 20);
     if (pthread_create(&g_pre.th, &a, preload_thread, NULL)) die("dm_host_preload_start: cannot start the thread");
 }
+static bool read_guide_heap(uint64_t address, void *out, size_t size) {
+    return dm_guest_heap_read(address, out, size) == 0;
+}
+
 int main(int argc, char **argv) {
     { int mtl_pso_prebuild_tool(void); if (mtl_pso_prebuild_tool()) return 0; }   // DM_PSO_PREBUILD=tool: the pipeline archive's prebuild alone, no game (nvn_mtl.m)
 #if !TARGET_OS_IPHONE
@@ -182,6 +187,13 @@ int main(int argc, char **argv) {
         LOG("host loading already finished early in the background (dm_host_preload_start)");
     } else host_preload(argc, argv);
     { void dm_fps_state_apply(void); dm_fps_state_apply(); }   // frame rate and render scale into the frame step state page (loader.c): the iOS launcher sets them after the loading began
+    { void dm_shield_guide_configure(const char *, int (*)(void)); int dm_fs_open_committed_main(void);
+      dm_shield_guide_configure(dm_main_build(), dm_fs_open_committed_main); }
+    for (int i = 0; i < g_nmod; i++) {
+        if (strcmp(g_mod[i].name, "main")) continue;
+        dm_shield_guide_configure_live(g_mod[i].build_id, g_mod[i].base, g_mod[i].size, read_guide_heap);
+        break;
+    }
     front_run(guest_main);
     return 0;
 }

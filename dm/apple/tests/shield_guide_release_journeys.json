@@ -1,0 +1,178 @@
+[
+  {
+    "name": "arrival",
+    "family": "opening",
+    "fixture": "monitor/early",
+    "area": 27,
+    "key": "route1.potion",
+    "title": "Potion pickup",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "nearby"
+  },
+  {
+    "name": "pickup",
+    "family": "opening",
+    "fixture": "monitor/later",
+    "area": 27,
+    "key": "route1.potion",
+    "title": "Potion pickup",
+    "status": "Collected · recorded in save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "minccino-return",
+    "family": "quests",
+    "fixture": "rehearsal/minccino-2",
+    "area": 2,
+    "key": "motostoke.minccino-return",
+    "title": "Find the missing Minccino",
+    "status": "Minccino returned · estimated from save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "minccino-before-reward",
+    "family": "quests",
+    "fixture": "rehearsal/minccino-2",
+    "area": 2,
+    "key": "motostoke.minccino-reward",
+    "title": "Follow up with Minccino’s owner",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "nearby"
+  },
+  {
+    "name": "minccino-reward",
+    "family": "quests",
+    "fixture": "rehearsal/minccino-3",
+    "area": 2,
+    "key": "motostoke.minccino-reward",
+    "title": "Follow up with Minccino’s owner",
+    "status": "Owner follow-up · estimated from save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "letter-accepted",
+    "family": "quests",
+    "fixture": "rehearsal/letter-2",
+    "area": 13,
+    "key": "hammerlocke.letter",
+    "title": "Accept an old letter",
+    "status": "Completed · estimated from save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "letter-delivered",
+    "family": "quests",
+    "fixture": "rehearsal/letter-3",
+    "area": 17,
+    "key": "ballonlea.letter",
+    "title": "Deliver Paula’s letter",
+    "status": "Letter delivered · estimated from save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "letter-return",
+    "family": "quests",
+    "fixture": "rehearsal/letter-4",
+    "area": 13,
+    "key": "hammerlocke.letter-return",
+    "title": "Return to the letter’s sender",
+    "status": "Return visit completed · estimated from save",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "ice-retry",
+    "family": "gym",
+    "fixture": "rehearsal/ice-retry",
+    "area": 20,
+    "key": "circhester.gym-badge",
+    "title": "Ice Badge",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "later"
+  },
+  {
+    "name": "ice-mission",
+    "family": "gym",
+    "fixture": "rehearsal/ice-mission",
+    "area": 20,
+    "key": "circhester.gym-mission",
+    "title": "Gym mission",
+    "status": "Gym mission clear recorded",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "ice-before-badge",
+    "family": "gym",
+    "fixture": "rehearsal/ice-mission",
+    "area": 20,
+    "key": "circhester.gym-badge",
+    "title": "Ice Badge",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "nearby"
+  },
+  {
+    "name": "ice-badge",
+    "family": "gym",
+    "fixture": "rehearsal/ice-badge",
+    "area": 20,
+    "key": "circhester.gym-badge",
+    "title": "Ice Badge",
+    "status": "Badge earned",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "daily-used",
+    "family": "daily",
+    "fixture": "daily-tracking/used",
+    "area": 2,
+    "key": "motostoke.battle-cafe",
+    "title": "Battle Café",
+    "status": "Last saved state · Challenge used when last saved",
+    "completed": false,
+    "group": "nearby"
+  },
+  {
+    "name": "daily-restored",
+    "family": "daily",
+    "fixture": "daily-tracking/restored",
+    "area": 2,
+    "key": "motostoke.battle-cafe",
+    "title": "Battle Café",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "nearby"
+  },
+  {
+    "name": "tea-owned",
+    "family": "collection",
+    "fixture": "tea-evolutions/both-evolved",
+    "area": 15,
+    "key": "stow.antique-polteageist",
+    "title": "Collect Antique Form Polteageist",
+    "status": "Antique Form Polteageist · Box 32, slot 30",
+    "completed": true,
+    "group": "completed"
+  },
+  {
+    "name": "tea-restored",
+    "family": "collection",
+    "fixture": "tea-evolutions/restored",
+    "area": 15,
+    "key": "stow.antique-polteageist",
+    "title": "Collect Antique Form Polteageist",
+    "status": "Player confirmation available",
+    "completed": false,
+    "group": "nearby"
+  }
+]

@@ -729,6 +729,36 @@ HLE_FORCE("_ZN2nn2fs22GetSaveDataRestoreFlagEPbPKc", "fsp-srv; persistent restor
 // Optional shared Apple sync hook; filesystem-only test binaries need no network adapter.
 static void (*dm_sync_committed)(void);
 void dm_fs_set_sync_callback(void (*callback)(void)) { dm_sync_committed = callback; }
+// An open descriptor pins the committed inode across the next atomic swap.
+// The caller reads and closes it without holding either filesystem lock.
+int dm_fs_open_committed_main(void) {
+    PATH_LOCK(); pthread_mutex_lock(&g_lock);
+    int fd = -1;
+    const char *save = getenv("DM_SAVE");
+    if (save && *save) {
+        size_t length = strlen(save);
+        while (length > 1 && save[length - 1] == '/') length--;
+        for (int i = 0; i < g_nmnt; i++) {
+            const char *root = g_mnt[i].commit;
+            if (!*root || strlen(root) != length || strncmp(root, save, length)) continue;
+            int dir = open(root, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+            if (dir >= 0) {
+                fd = openat(dir, "main", O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
+                close(dir);
+            }
+            break;
+        }
+    }
+    pthread_mutex_unlock(&g_lock);
+    return fd;
+}
+// Explicit backup capture uses the same root serialization without requiring
+// pairing or invoking the automatic cloud callback. The callback only clones.
+void dm_fs_capture_with(void (*capture)(void *), void *context) {
+    PATH_LOCK(); pthread_mutex_lock(&g_lock);
+    capture(context);
+    pthread_mutex_unlock(&g_lock);
+}
 void dm_fs_sync_capture(void) {
     PATH_LOCK(); pthread_mutex_lock(&g_lock);
     if (dm_sync_committed) dm_sync_committed();

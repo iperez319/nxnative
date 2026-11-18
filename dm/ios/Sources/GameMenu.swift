@@ -14,12 +14,15 @@ public func dmGameMenu() -> UnsafeMutableRawPointer {
 }
 
 private func gameMenuItems() -> [UIMenuElement] {
-    let names = ["2D", "3D", "Tap"]
-    let layouts = (0..<3).filter { dm_pad_layout_offered(Int32($0)) }.map { l in
+    let names = ["2D", "3D", "Tap", "2D — D-pad"]
+    let layouts = (0..<4).filter { dm_pad_layout_offered(Int32($0)) }.map { l in
         UIAction(title: names[l], state: dm_pad_layout() == l ? .on : .off) { _ in dm_pad_layout_set(Int32(l)) }
     }
     let layout = UIMenu(title: "Controller layout", options: .singleSelection, children: layouts)   // a choice's value shows in its submenu: a subtitle would make each row two lines
-    var items: [UIMenuElement] = []
+    var items: [UIMenuElement] = [UIMenu(title: "Controllers", children: [UIAction(title: "Connect iPhone / disconnect") { _ in dm_phone_controller_show() }])]
+    if dm_shield_guide_available() {
+        items.insert(UIAction(title: "Pokémon Shield Guide", image: UIImage(systemName: "book")) { _ in showShieldGuide() }, at: 0)
+    }
     var placed = false
     if let m = gameMenuModel {
         for section in m.sections {

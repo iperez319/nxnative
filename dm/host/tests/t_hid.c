@@ -510,6 +510,51 @@ static void t_motion_hid(void) {
     dm_pad_players(1); g_phone_mode = -1;
 }
 
+static void t_remote(void) {
+    g_mode = 1; ids((uint32_t[]){0, 1, NPAD_HANDHELD}, 3); dm_pad_players(3);
+    dm_input_hold(0); dm_input_remote_block(0); dm_input_remote_owner(0);
+    dm_input_set(DM_BTN_X, 100, 0, 0, 0); dm_pad_set(DM_BTN_Y, 200, 0, 0, 0);
+    dm_pad_set_player(1, DM_BTN_B, 300, 0, 0, 0);
+    dm_input_remote_owner(1);
+    CHECK(dm_input_remote_owned() && buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == 0, "phone claim starts neutral and drops local player-1 edges");
+    CHECK(buttons_of(1, STYLE_FULLKEY) == DM_BTN_B && lx_of(1) == 300, "claim preserves player 2");
+    dm_input_set(DM_BTN_X, 999, 0, 0, 0); dm_pad_set(DM_BTN_Y, 999, 0, 0, 0); script_set(DM_BTN_PLUS, 999, 0, 0, 0);
+    dm_input_remote_set(DM_BTN_A, -1234, 0, 0, 0); dm_input_remote_set(0, -1234, 0, 0, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == DM_BTN_A && buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == -1234, "short remote tap latched once; local sources cannot compete");
+    dm_input_remote_set(DM_BTN_PLUS | DM_BTN_MINUS, 1200, 0, -2200, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == (DM_BTN_PLUS | DM_BTN_MINUS), "Plus and Minus stay game inputs");
+    dm_input_remote_block(1); dm_input_remote_set(DM_BTN_A, 500, 0, 0, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == 0, "host menu suppresses held remote input and pending edges");
+    dm_input_remote_block(0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0, "closing host UI cannot replay suppressed presses");
+    dm_input_remote_set(DM_BTN_A, 0, 0, 0, 0); dm_input_hold(1);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0, "guest applet suppresses remote game input");
+    dm_input_remote_set(0, 0, 0, 0, 0); dm_input_hold(0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0, "guest applet does not leak a pending remote tap on close");
+    uint64_t peek; int32_t axes[4];
+    dm_pad_set_player(1, DM_BTN_Y, 300, 0, 0, 0); dm_pad_set_player(1, 0, 0, 0, 0, 0);
+    dm_input_remote_set(DM_BTN_A, 500, 0, 0, 0); dm_input_remote_set(0, 0, 0, 0, 0);
+    dm_input_remote_owner(0); dm_input_peek(&peek, axes);
+    CHECK(!(peek & DM_BTN_A) && (peek & DM_BTN_Y), "disconnect clears only remote applet edges, preserving player 2's tap");
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == 0, "disconnect clears remote and suppressed local edges");
+    dm_input_set(DM_BTN_X, 800, 0, 0, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == DM_BTN_X && lx_of(0) == 800, "fresh local input works after disconnect");
+    dm_input_remote_set(DM_BTN_A, 500, 0, 0, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == DM_BTN_X, "late remote publication after disconnect is ignored");
+    dm_input_remote_owner(1);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == 0, "reconnect starts with no previous session input");
+    ids((uint32_t[]){0, NPAD_HANDHELD}, 2); dm_pad_set_player(1, DM_BTN_B, 999, 0, 0, 0);
+    CHECK(buttons_of(0, STYLE_FULLKEY) == 0 && lx_of(0) == 0, "single-player physical fallback cannot compete with phone ownership");
+    dm_input_remote_set(DM_BTN_A, -900, 0, 0, 0);
+    CHECK((dm_cheats_keys() & DM_BTN_A) && lx_of(0) == -900, "remote input reaches cheat key snapshot and gameplay axes");
+    g_mode = 0;
+    CHECK(buttons_of(NPAD_HANDHELD, STYLE_HANDHELD) == DM_BTN_A, "phone reaches handheld npad as well as docked player 1");
+    motion_now += 200000000ull;
+    CHECK(buttons_of(NPAD_HANDHELD, STYLE_HANDHELD) == 0, "HID releases stale remote input even while the main-queue transport watchdog cannot run");
+    dm_input_remote_owner(0); dm_pad_set_player(1, 0, 0, 0, 0, 0); dm_input_set(0, 0, 0, 0, 0);
+    g_mode = 1; ids((uint32_t[]){0, 1, NPAD_HANDHELD}, 3); dm_pad_players(1);
+}
+
 int main(void) {
     CHECK(setenv("DM_RUMBLE_LOG", "1", 1) == 0, "enable rumble diagnostics");
     t_slots();
@@ -521,6 +566,7 @@ int main(void) {
     t_motion_live();
     t_motion_hid();
     t_rec();
+    t_remote();
     {   // Nmouse with no device (SDK 21's forms): the pointer range is kept, the merged handle 0 takes settings, the standard mouse and the handle queries report nothing
         int w = 0, h = 0; uint64_t std = 7; uint32_t npad = 9;
         h_hid_NmouseInitT(NULL, 0, 1920, 1080, 1); h_hid_NmouseGetRange(&w, &h);

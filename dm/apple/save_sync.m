@@ -3,11 +3,14 @@
 #import <TargetConditionals.h>
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
+extern void dm_host_present(void *parent, void *controller);
 #else
 #import <AppKit/AppKit.h>
 #endif
 #include <sys/clonefile.h>
 #include <stdatomic.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "game_profile.h"
 
 static NSString *savePath, *statePath;
@@ -17,7 +20,12 @@ static NSDictionary *credentials;
 static NSString *statusText=@"Saved locally";
 static _Atomic int enabled, captures;
 static _Atomic int running;
-static BOOL uploading;
+static BOOL uploading, localDirty, importing, handoffWaiting;
+static NSString *lastError, *handoffRevision;
+static uint64_t processedCommit, handoffCommit, handoffAttempt;
+extern uint64_t dm_fs_commit_count(void);
+static NSDictionary *statusSnapshot;
+static void checkHandoff(void);
 static char workerKey;
 static _Atomic int remoteAdvanced;
 static dispatch_source_t retryTimer;
@@ -25,22 +33,64 @@ static void (^backgroundDone)(void);
 static void (*launchReady)(void);
 static __weak id presenter;
 static __weak id activeStatusAlert;
+static BOOL landingActive, dashboardActive, landingAtMenu, launchRequested;
+static NSUInteger landingToken;
+static NSUInteger landingOptionCount;
+static void (^landingSelection)(NSUInteger);
+static NSDictionary *inlinePage;
 static void pump(void);
 static void reconcile(void);
 static void cancelOutstanding(void);
+// State snapshots are assembled only by the serial coordinator, never by a UI
+// callback or under filesystem locks. Text is presentation, not state detection.
+static NSDictionary *makeStatus(void) {
+    NSString *operation = @"pending", *label = @"Saved locally";
+    BOOL pending = captures || localDirty || processedCommit != dm_fs_commit_count() || [state[@"queue"] count];
+    if (!credentials) { operation = @"localOnly"; label = @"Local only"; }
+    else if ([state[@"importNeedsReconciliation"] boolValue] || [state[@"blocked"] boolValue]) { operation = @"conflict"; label = @"Choose progress"; }
+    else if ([state[@"offlinePaused"] boolValue]) { operation = @"offlinePaused"; label = @"Uploads paused"; }
+    else if (remoteAdvanced) { operation = @"remoteAdvanced"; label = @"Restart to load"; }
+    else if (lastError || [state[@"paused"] boolValue]) { operation = @"recoveryRequired"; label = @"Needs attention"; }
+    else if (uploading) { operation = @"uploading"; label = @"Uploading"; }
+    else if (!pending && state[@"base"] && state[@"base"] != NSNull.null) { operation = @"uploaded"; label = @"Uploaded"; }
+    BOOL ready = handoffRevision && [handoffRevision isEqual:state[@"base"]] && handoffCommit == dm_fs_commit_count() && [operation isEqual:@"uploaded"];
+    return @{@"operation":operation, @"label":label, @"message":statusText,
+        @"paired":@(credentials!=nil), @"running":@(running),
+        @"recoveryPending":@(statePath && [NSFileManager.defaultManager fileExistsAtPath:[statePath stringByAppendingPathComponent:@"restore.json"]]),
+        @"pendingCaptures":@(captures), @"pendingUploads":@([state[@"queue"] count]),
+        @"pendingLocalChanges":@(pending), @"localRevision":(captures || localDirty || processedCommit != dm_fs_commit_count()) ? NSNull.null : ([[state[@"queue"] lastObject] objectForKey:@"revision"] ?: state[@"base"] ?: NSNull.null),
+        @"acknowledgedRevision":state[@"base"] ?: NSNull.null,
+        @"lastConfirmedUpload":state[@"lastConfirmedUpload"] ?: NSNull.null,
+        @"sourceDevice":state[@"sourceDevice"] ?: NSNull.null,
+        @"pausedReason":[state[@"offlinePaused"] boolValue] ? @"user" : lastError ?: ([state[@"paused"] boolValue] ? @"transport" : @""),
+        @"handoffReady":@(ready), @"handoffWaiting":@(handoffWaiting),
+        @"actions":credentials ? @[@"sync", @"handoff", @"export", @"restartToRestore"] : @[@"pairBeforeLaunch", @"export"]};
+}
+static NSString *formatStatus(NSDictionary *s);
+NSDictionary *dm_sync_status_snapshot(void) { @synchronized(DMSaveArchive.class) { return statusSnapshot; } }
 static void setStatus(NSString *s) {
-    if (remoteAdvanced && [s isEqual:@"Uploaded"]) s=@"Newer cloud save — restart to load";
-    @synchronized(DMSaveArchive.class) { statusText=s; }
+    if (worker && !dispatch_get_specific(&workerKey)) { dispatch_async(worker, ^{ setStatus(s); }); return; }
+    statusText = [s copy];
+    NSDictionary *snapshot = makeStatus();
+    @synchronized(DMSaveArchive.class) { statusSnapshot = snapshot; }
     dispatch_async(dispatch_get_main_queue(),^{
-        [NSNotificationCenter.defaultCenter postNotificationName:@"DMSaveSyncStatus" object:s];
+        [NSNotificationCenter.defaultCenter postNotificationName:@"DMSaveSyncStatus" object:snapshot];
 #if TARGET_OS_IPHONE
-        [activeStatusAlert setMessage:s];
+        [activeStatusAlert setMessage:formatStatus(snapshot)];
 #else
-        [activeStatusAlert setInformativeText:s];
+        [activeStatusAlert setInformativeText:formatStatus(snapshot)];
 #endif
     });
 }
-static NSString *currentStatus(void) { @synchronized(DMSaveArchive.class) { return statusText; } }
+static NSString *formatStatus(NSDictionary *s) {
+    id revision=s[@"acknowledgedRevision"], time=s[@"lastConfirmedUpload"], device=s[@"sourceDevice"];
+    return [NSString stringWithFormat:@"%@\n%@\nPending captures: %@ · uploads: %@\nAcknowledged revision: %@\nConfirmed upload: %@\nSource device: %@\nSave in-game first; only committed files are transferred.", s[@"label"], s[@"message"], s[@"pendingCaptures"], s[@"pendingUploads"], revision==NSNull.null ? @"unknown" : revision, time==NSNull.null ? @"unknown" : time, device==NSNull.null ? @"unknown" : device];
+}
+static NSString *currentStatus(void) { return formatStatus(makeStatus()); }
+static NSString *displaySaveTime(id value) {
+    NSDate *date=[value isKindOfClass:NSString.class] ? [NSISO8601DateFormatter.new dateFromString:value] : nil;
+    return date ? [NSDateFormatter localizedStringFromDate:date dateStyle:NSDateFormatterMediumStyle timeStyle:NSDateFormatterShortStyle] : @"Unknown save time";
+}
 static void problem(NSString *s) { @throw [NSException exceptionWithName:@"SaveSync" reason:s userInfo:nil]; }
 static NSDictionary *jsonFile(NSString *p) { NSData *d=[NSData dataWithContentsOfFile:p]; return d?[NSJSONSerialization JSONObjectWithData:d options:NSJSONReadingMutableContainers error:nil]:nil; }
 static void persist(void) { dm_save_json([statePath stringByAppendingPathComponent:@"state.json"],state); }
@@ -107,7 +157,9 @@ static NSString *captureNow(void) {
     if (![NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil]) return nil;
     for (NSString *root in @[@"account",@"device"]) {
         NSString *source=[root isEqual:@"account"]?savePath:[savePath stringByAppendingString:@"_device"];
-        if (access(source.fileSystemRepresentation,F_OK)==0 && clonefile(source.fileSystemRepresentation,[path stringByAppendingPathComponent:root].fileSystemRepresentation,0)) {
+        struct stat info;
+        int rc=lstat(source.fileSystemRepresentation,&info);
+        if ((rc && errno!=ENOENT) || (!rc && (!S_ISDIR(info.st_mode) || clonefile(source.fileSystemRepresentation,[path stringByAppendingPathComponent:root].fileSystemRepresentation,0)))) {
             [NSFileManager.defaultManager removeItemAtPath:path error:nil]; return nil;
         }
     }
@@ -121,7 +173,8 @@ static unsigned long long localBytes(void) {
 static void enqueue(NSString *capture, id parentOverride) {
     NSDictionary *inventory=[DMSaveArchive inventory:capture]; NSString *identity=inventoryID(inventory);
     NSMutableArray *queue=state[@"queue"]; if (!queue) state[@"queue"]=queue=[NSMutableArray array];
-    if (!parentOverride && [state[@"lastInventory"] isEqual:identity]) { if (!queue.count && ![state[@"blocked"] boolValue]) setStatus(state[@"base"] && state[@"base"]!=NSNull.null?@"Uploaded":@"Saved locally"); return; }
+    if (!parentOverride && [state[@"lastInventory"] isEqual:identity]) { localDirty=NO; if (!queue.count && ![state[@"blocked"] boolValue]) setStatus(state[@"base"] && state[@"base"]!=NSNull.null?@"Uploaded":@"Saved locally"); return; }
+    localDirty=YES;
     if (localBytes() > (256u<<20)) problem(@"Saved locally — snapshot storage full");
     if (queue.count>=3 || [state[@"blocked"] boolValue]) { setStatus([state[@"blocked"] boolValue]?@"Conflict":@"Saved locally — queue full"); return; }
     NSString *revision=NSUUID.UUID.UUIDString.lowercaseString;
@@ -129,7 +182,7 @@ static void enqueue(NSString *capture, id parentOverride) {
     NSMutableDictionary *m=[inventory mutableCopy]; [m addEntriesFromDictionary:@{@"format":@1,@"revision":revision,@"parent":parent,@"title":@DM_GAME_ID,@"profile":@"default",@"device":credentials[@"device"],@"displayTime":[NSISO8601DateFormatter.new stringFromDate:NSDate.date],@"compatibility":compatibility()}];
     NSString *filename=[revision stringByAppendingString:@".nxsave"], *path=[statePath stringByAppendingPathComponent:filename];
     [DMSaveArchive write:m capture:capture to:path];
-    [queue addObject:[@{@"revision":revision,@"file":filename,@"inventory":identity} mutableCopy]]; state[@"lastInventory"]=identity; persist();
+    [queue addObject:[@{@"revision":revision,@"file":filename,@"inventory":identity} mutableCopy]]; state[@"lastInventory"]=identity; localDirty=NO; persist();
     if ([state[@"offlinePaused"] boolValue]) setStatus(@"Offline — uploads paused");
 }
 static void pausePublication(void) {
@@ -142,17 +195,42 @@ static void resumePublication(void) {
     [state removeObjectForKey:@"offlinePaused"];
     persist();
 }
+static void landingChooseContext(NSString *title, NSString *message, NSArray *options, BOOL menu, NSDictionary *context, void (^selected)(NSUInteger)) {
+    landingAtMenu=menu; landingSelection=[selected copy]; landingOptionCount=options.count;
+    NSMutableArray *actions=[NSMutableArray array];
+    for (NSUInteger i=0;i<options.count;i++) [actions addObject:@{@"id":[NSString stringWithFormat:@"choice-%lu",(unsigned long)i], @"title":options[i]}];
+    NSMutableDictionary *values=[@{@"title":title, @"message":message, @"options":options, @"actions":actions, @"menu":@(menu), @"running":@(running), @"token":@(++landingToken)} mutableCopy];
+    if (context) [values addEntriesFromDictionary:context];
+    NSDictionary *page=[values copy]; inlinePage=page;
+    dispatch_async(dispatch_get_main_queue(),^{ [NSNotificationCenter.defaultCenter postNotificationName:@"DMSaveLauncherState" object:page]; });
+}
+static void landingChoose(NSString *title, NSString *message, NSArray *options, BOOL menu, void (^selected)(NSUInteger)) {
+    landingChooseContext(title,message,options,menu,nil,selected);
+}
 static void ready(void) {
+    // A completed reconciliation/restore must not keep presenting a transient
+    // error from an earlier attempt as the current state.
+    lastError=nil;
+    // Pairing and restoring from the landing page return to it. Only an explicit
+    // Play (or Play offline) may release the guest's prelaunch gate.
+    if (landingActive && !launchRequested) { setStatus(statusText); dm_sync_menu(NULL); return; }
+    landingActive=NO; landingSelection=nil;
     running=YES;
+    setStatus(statusText);
     dispatch_async(dispatch_get_main_queue(),^{ if (launchReady) { void (*fn)(void)=launchReady; launchReady=NULL; fn(); } });
 }
-static void choose(NSString *title, NSString *message, NSArray<NSString *> *options, void (^selected)(NSUInteger)) {
+static void chooseContext(NSString *title, NSString *message, NSArray<NSString *> *options, NSDictionary *context, void (^selected)(NSUInteger)) {
+    if (landingActive || dashboardActive) { landingChooseContext(title,message,options,NO,context,selected); return; }
+#if TARGET_OS_IPHONE
+    if (running) return; // The player may have closed the dashboard during work.
+#endif
+    for (NSDictionary *copy in context[@"comparisons"]) message=[message stringByAppendingFormat:@"\n%@: %@ · version %@ · saved %@",copy[@"title"],copy[@"device"],copy[@"version"],copy[@"time"]==NSNull.null ? @"unknown" : copy[@"time"]];
     dispatch_async(dispatch_get_main_queue(),^{
 #if TARGET_OS_IPHONE
         UIAlertController *alert=[UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
         for (NSUInteger i=0;i<options.count;i++) [alert addAction:[UIAlertAction actionWithTitle:options[i] style:UIAlertActionStyleDefault handler:^(UIAlertAction *a){ dispatch_async(worker,^{selected(i);}); }]];
         if (running && [title isEqual:@"Cloud saves"]) activeStatusAlert=alert;
-        [presenter presentViewController:alert animated:YES completion:nil];
+        dm_host_present((__bridge void *)presenter, (__bridge void *)alert);
 #else
         NSAlert *alert=[NSAlert new]; alert.messageText=title; alert.informativeText=message;
         if (running && [title isEqual:@"Cloud saves"]) activeStatusAlert=alert;
@@ -160,8 +238,11 @@ static void choose(NSString *title, NSString *message, NSArray<NSString *> *opti
 #endif
     });
 }
+static void choose(NSString *title, NSString *message, NSArray<NSString *> *options, void (^selected)(NSUInteger)) {
+    chooseContext(title,message,options,nil,selected);
+}
 static void protectedAction(void (^action)(void)) {
-    @try { action(); } @catch (NSException *e) { setStatus(@"Saved locally"); choose(@"Cloud save paused",e.reason,@[@"Back"],^(NSUInteger i){ if (!running) reconcile(); }); }
+    @try { action(); } @catch (NSException *e) { lastError=e.reason; setStatus(e.reason); choose(@"Save operation paused",e.reason,@[@"Back"],^(NSUInteger i){ dm_sync_menu(NULL); }); }
 }
 
 @interface DMSaveTransport : NSObject <NSURLSessionDataDelegate>
@@ -184,9 +265,11 @@ static DMSaveTransport *transport;
 }
 - (void)URLSession:(NSURLSession *)s task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     dispatch_async(worker,^{
-        uploading=NO;
         @try {
-            if ([state[@"offlinePaused"] boolValue]) { setStatus(@"Offline — uploads paused"); return; }
+            NSDictionary *current=[state[@"queue"] firstObject];
+            if (![current[@"revision"] isEqual:task.taskDescription]) return;
+            uploading=NO;
+            if ([state[@"offlinePaused"] boolValue] || [state[@"importNeedsReconciliation"] boolValue]) { setStatus(@"Publication paused — reconcile before uploading"); return; }
             NSMutableArray *q=state[@"queue"]; NSDictionary *item=q.firstObject;
             if (!item || ![item[@"revision"] isEqual:task.taskDescription]) return;
             NSInteger code=[(NSHTTPURLResponse *)task.response statusCode];
@@ -201,10 +284,11 @@ static DMSaveTransport *transport;
             if (!sent || ![receipt[@"sha256"] isEqual:dm_save_hash(sent)]) { state[@"paused"]=@YES; persist(); setStatus(@"Saved locally — receipt mismatch"); return; }
             if (![receipt[@"published"] boolValue]) { state[@"blocked"]=@YES; persist(); setStatus(@"Conflict — restart to choose progress"); return; }
             state[@"attempts"]=@0; [state removeObjectForKey:@"retryAfter"]; state[@"paused"]=@NO;
+            lastError=nil; state[@"lastConfirmedUpload"]=[NSISO8601DateFormatter.new stringFromDate:NSDate.date];
             state[@"base"]=item[@"revision"]; state[@"baseInventory"]=item[@"inventory"]; NSString *file=item[@"file"]; [q removeObjectAtIndex:0]; persist();
             [NSFileManager.defaultManager removeItemAtPath:[statePath stringByAppendingPathComponent:file] error:nil];
             setStatus(@"Saved locally"); dm_fs_sync_capture(); pump();
-        } @catch (NSException *e) { setStatus(@"Saved locally"); }
+        } @catch (NSException *e) { lastError=e.reason; setStatus(e.reason); }
     });
 }
 - (void)URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session {
@@ -218,14 +302,14 @@ static void cancelOutstanding(void) {
     }];
 }
 static void pump(void) {
-    if (!credentials || uploading || [state[@"offlinePaused"] boolValue] || [state[@"blocked"] boolValue] || [state[@"paused"] boolValue] || [state[@"retryAfter"] doubleValue]>[NSDate.date timeIntervalSince1970]) return;
+    if (!credentials || remoteAdvanced || importing || uploading || [state[@"importNeedsReconciliation"] boolValue] || [state[@"offlinePaused"] boolValue] || [state[@"blocked"] boolValue] || [state[@"paused"] boolValue] || [state[@"retryAfter"] doubleValue]>[NSDate.date timeIntervalSince1970]) return;
     @try { persist(); } @catch(NSException *e) { setStatus(@"Saved locally"); return; }
     if (!transport) transport=[DMSaveTransport new];
     NSDictionary *item=[state[@"queue"] firstObject]; if (!item) return;
     uploading=YES;
     [transport.session getAllTasksWithCompletionHandler:^(NSArray<NSURLSessionTask *> *tasks) {
         dispatch_async(worker,^{ @try {
-            if ([state[@"offlinePaused"] boolValue]) { uploading=NO; return; }
+            if ([state[@"offlinePaused"] boolValue] || importing || [state[@"importNeedsReconciliation"] boolValue]) { uploading=NO; return; }
             if (![[[state[@"queue"] firstObject] objectForKey:@"revision"] isEqual:item[@"revision"]]) { uploading=NO; pump(); return; }
             for (NSURLSessionTask *t in tasks) if ([t.taskDescription isEqual:item[@"revision"]]) { [t resume]; setStatus(@"Uploading"); return; }
             NSMutableURLRequest *r=[NSMutableURLRequest requestWithURL:[NSURL URLWithString:api([@"revisions/" stringByAppendingString:item[@"revision"]])]];
@@ -236,16 +320,70 @@ static void pump(void) {
 }
 void dm_sync_committed(void) {
     if (!atomic_load(&enabled)) return;
-    if (atomic_fetch_add(&captures,1)>=2) { atomic_fetch_sub(&captures,1); setStatus(@"Saved locally"); return; }
+    if (atomic_fetch_add(&captures,1)>=2) { atomic_fetch_sub(&captures,1); dispatch_async(worker, ^{ setStatus(@"Saved locally — capture pending"); }); return; }
     @autoreleasepool {
-        setStatus(@"Saved locally"); NSString *snapshot=captureNow();
-        if (!snapshot) { atomic_fetch_sub(&captures,1); setStatus(@"Saved locally"); return; }
-        dispatch_async(worker,^{ @try { enqueue(snapshot,nil); pump(); } @catch (NSException *e) { setStatus(@"Saved locally"); }
+        uint64_t commit = dm_fs_commit_count();
+        dispatch_async(worker, ^{ setStatus(@"Saved locally — capture pending"); });
+        NSString *snapshot=captureNow();
+        if (!snapshot) { atomic_fetch_sub(&captures,1); dispatch_async(worker, ^{ localDirty=YES; lastError=@"Cannot capture committed roots"; setStatus(lastError); }); return; }
+        dispatch_async(worker,^{
+            @try { enqueue(snapshot,nil); processedCommit=commit; lastError=nil; pump(); }
+            @catch (NSException *e) { localDirty=YES; lastError=e.reason; }
             [NSFileManager.defaultManager removeItemAtPath:snapshot error:nil]; atomic_fetch_sub(&captures,1);
+            setStatus(lastError ?: @"Committed files captured"); checkHandoff();
         });
     }
 }
+static void finishHandoff(NSDictionary *head, uint64_t commit, NSString *revision) {
+    if (![head[@"revision"] isEqual:revision] || ![state[@"base"] isEqual:revision] || localDirty || uploading || [state[@"queue"] count] || [state[@"blocked"] boolValue] || [state[@"offlinePaused"] boolValue]) { handoffWaiting=NO; handoffRevision=nil; return; }
+        state[@"sourceDevice"]=head[@"deviceName"] ?: head[@"manifest"][@"device"] ?: @"unknown";
+        if (commit != dm_fs_commit_count() || captures) { setStatus(@"New local save — waiting for its upload"); return; }
+        handoffRevision=revision; handoffCommit=commit; handoffWaiting=NO;
+        setStatus([NSString stringWithFormat:@"Committed save uploaded — check cloud on the other device\nRevision: %@\nConfirmed: %@",revision,state[@"lastConfirmedUpload"] ?: @"unknown"]);
+}
+static void checkHandoff(void) {
+    if (!handoffWaiting || captures || uploading || [state[@"queue"] count]) return;
+    if (localDirty || processedCommit != dm_fs_commit_count() || lastError || [state[@"blocked"] boolValue] || [state[@"paused"] boolValue] || [state[@"offlinePaused"] boolValue] || [state[@"importNeedsReconciliation"] boolValue]) {
+        handoffWaiting=NO; setStatus(@"Handoff not confirmed — inspect save status and retry"); return;
+    }
+    @try {
+        uint64_t commit=dm_fs_commit_count(); id revision=state[@"base"];
+        id head=get(@"head")[@"head"];
+        if (head == NSNull.null || !revision || revision == NSNull.null || ![head[@"revision"] isEqual:revision]) {
+            remoteAdvanced=YES; handoffWaiting=NO; setStatus(@"Cloud head changed — restart to reconcile; handoff not confirmed"); return;
+        }
+        finishHandoff(head,commit,revision);
+    } @catch (NSException *e) { handoffWaiting=NO; lastError=e.reason; setStatus(@"Handoff not confirmed — cloud could not be checked"); }
+}
+static void runSync(BOOL handoff) {
+    protectedAction(^{
+        resumePublication(); lastError=nil; state[@"paused"]=@NO; [state removeObjectForKey:@"retryAfter"]; persist();
+        handoffWaiting=handoff; handoffRevision=nil;
+        uint64_t attempt=++handoffAttempt;
+        if (handoff) dispatch_after(dispatch_time(DISPATCH_TIME_NOW,90*NSEC_PER_SEC),worker,^{
+            if (handoffWaiting && attempt==handoffAttempt) { handoffWaiting=NO; setStatus(@"Cloud check timed out. Saved progress stays queued; you can retry."); }
+        });
+        setStatus(@"Checking saved progress…");
+        dm_fs_sync_capture(); pump();
+        if (dashboardActive) dm_sync_menu(NULL);
+        else choose(@"Cloud saves",currentStatus(),@[@"Close"],^(NSUInteger n){});
+    });
+}
+static void syncNow(BOOL handoff) {
+    if (!credentials) { choose(@"Cloud saves are off",@"Set up cloud saves before starting the game. You can still export a backup file.",@[@"Back"],^(NSUInteger i){dm_sync_menu(NULL);}); return; }
+    if ([state[@"importNeedsReconciliation"] boolValue] || remoteAdvanced || [state[@"blocked"] boolValue]) { choose(@"Choose a save before syncing",@"Close and reopen the app to choose the progress to keep. Your local save and existing backups are preserved.",@[@"Back"],^(NSUInteger i){dm_sync_menu(NULL);}); return; }
+    // The live screen explains the save-first requirement beside this action.
+    // Resume & sync is an explicit request to leave offline mode.
+    if (dashboardActive) { runSync(YES); return; }
+    choose(handoff ? @"Prepare to switch devices" : @"Sync committed saves",@"Save in-game first. Continue resumes paused uploads and transfers committed files only. Closing the status screen does not discard queued work.",@[@"Continue",@"Cancel"],^(NSUInteger i){ if (!i) runSync(handoff); });
+}
+static void recoverIfNeeded(void) {
+    if (![NSFileManager.defaultManager fileExistsAtPath:[statePath stringByAppendingPathComponent:@"restore.json"]]) return;
+    [DMSaveArchive recover:statePath save:savePath];
+    state=[jsonFile([statePath stringByAppendingPathComponent:@"state.json"]) mutableCopy] ?: [NSMutableDictionary dictionary];
+}
 static void installReceipt(NSDictionary *receipt, NSDictionary *head) {
+    recoverIfNeeded();
     if (localBytes() > (256u<<20)) problem(@"Local snapshot storage is full. Export retained backups before restoring more history.");
     NSString *revision=receipt[@"revision"]; NSInteger code; NSData *bytes=request(api([NSString stringWithFormat:@"revisions/%@/archive",revision]),@"GET",nil,&code);
     if (code!=200 || ![dm_save_hash(bytes?:NSData.data) isEqual:receipt[@"sha256"]]) problem(@"Archive download failed verification");
@@ -258,17 +396,32 @@ static void installReceipt(NSDictionary *receipt, NSDictionary *head) {
     if (![revision isEqual:head[@"revision"]] || [receipt[@"resolve"] boolValue]) { NSString *capture=captureNow(); if (!capture) problem(@"Cannot capture rollback"); enqueue(capture,head[@"revision"]?:NSNull.null); [NSFileManager.defaultManager removeItemAtPath:capture error:nil]; pump(); }
     setStatus([state[@"queue"] count]?@"Uploading":@"Uploaded"); ready();
 }
+static void installWhenIdle(NSDictionary *receipt, NSDictionary *head) {
+    importing=YES;
+    void (^install)(void)=^{
+        protectedAction(^{ if (running || uploading || captures) problem(@"Save operations are outstanding. Retry before launch after they finish."); installReceipt(receipt,head); });
+        importing=NO; pump();
+    };
+    if (!transport) { install(); return; }
+    [transport.session getAllTasksWithCompletionHandler:^(NSArray<NSURLSessionTask *> *tasks) {
+        dispatch_async(worker,^{
+            if (tasks.count) { importing=NO; choose(@"Upload still outstanding",@"Wait for its receipt or restart and check cloud before restoring. Local saves are unchanged.",@[@"Back"],^(NSUInteger i){dm_sync_menu(NULL);}); }
+            else install();
+        });
+    }];
+}
 static void selectCloud(NSDictionary *receipt, NSDictionary *head) {
     NSDictionary *c=receipt[@"manifest"][@"compatibility"];
     if (![c isEqual:compatibility()] || ![c[@"builds"] count]) {
-        choose(@"Different game build",@"This save has different or unknown game version/build/DLC metadata. Loading it may be incompatible. A local backup will be kept.",@[@"Load anyway",@"Back"],^(NSUInteger i){if (!i) protectedAction(^{installReceipt(receipt,head);}); else reconcile();});
-    } else protectedAction(^{installReceipt(receipt,head);});
+        choose(@"Different game build",@"This save has different or unknown game version/build/DLC metadata. Loading it may be incompatible. A local backup will be kept.",@[@"Load anyway",@"Back"],^(NSUInteger i){if (!i) installWhenIdle(receipt,head); else reconcile();});
+    } else installWhenIdle(receipt,head);
 }
 static void reconcile(void) {
     @try {
         [DMSaveArchive recover:statePath save:savePath]; state=[jsonFile([statePath stringByAppendingPathComponent:@"state.json"]) mutableCopy]?:[NSMutableDictionary dictionary];
-        if (!credentials) { ready(); return; }
+        if (!credentials) { setStatus(@"Local only"); ready(); return; }
         NSDictionary *h=get(@"head"), *head=h[@"head"]==NSNull.null?nil:h[@"head"];
+        if (head) state[@"sourceDevice"]=head[@"deviceName"] ?: head[@"manifest"][@"device"] ?: @"unknown";
         NSString *capture=captureNow(); if (!capture) problem(@"Cannot capture local progress");
         NSDictionary *inv=[DMSaveArchive inventory:capture]; NSString *identity=inventoryID(inv);
         BOOL dirty=![identity isEqual:state[@"baseInventory"]], progress=[inv[@"entries"] count]>0;
@@ -281,13 +434,21 @@ static void reconcile(void) {
             if (!head && !base && !progress) { state[@"baseInventory"]=identity; state[@"lastInventory"]=identity; persist(); }
             else if (dirty && (base || progress)) enqueue(capture,nil); pump(); ready();
         } else {
-            setStatus(@"Conflict"); NSString *message=head?[NSString stringWithFormat:@"Cloud device: %@\nGame version: %@\nSaved: %@\nLocal game version: %@\nChoose the progress to continue. Existing snapshots and a local backup are preserved.",head[@"deviceName"]?:head[@"manifest"][@"device"],head[@"manifest"][@"compatibility"][@"version"],head[@"manifest"][@"displayTime"],compatibility()[@"version"]]:@"Use the existing local save as the first cloud revision?";
-            choose(@"Choose save progress",message,head?@[@"Continue local",@"Load cloud",@"Play offline"]:@[@"Upload local",@"Play offline"],^(NSUInteger choice){
+            setStatus(@"Conflict");
+            NSString *message=head ? @"Choose the save to continue with. Loading the cloud save keeps a backup of this device's progress." : @"Start cloud saves with the progress on this device? Existing backups are kept.";
+            NSDictionary *context=head ? @{@"kind":@"conflict", @"comparisons":@[
+                @{@"title":@"This device", @"device":progress ? @"Local progress" : @"No saved files", @"version":compatibility()[@"version"] ?: @"unknown", @"time":NSNull.null},
+                @{@"title":@"Cloud save", @"device":head[@"deviceName"] ?: head[@"manifest"][@"device"] ?: @"Unknown device", @"version":head[@"manifest"][@"compatibility"][@"version"] ?: @"unknown", @"time":head[@"manifest"][@"displayTime"] ?: NSNull.null}
+            ]} : nil;
+            NSMutableArray *options=[(head ? @[@"Use this device",@"Use cloud save",@"Play offline"] : @[@"Use this device",@"Play offline"]) mutableCopy];
+            if (landingActive) [options addObject:@"Back"];
+            chooseContext(head ? @"Which save do you want to use?" : @"Start using cloud saves?",message,options,context,^(NSUInteger choice){
+                if (landingActive && choice==(head ? 3 : 2)) { dm_sync_menu(NULL); return; }
                 protectedAction(^{
                     if ((head && choice==2) || (!head && choice==1)) { pausePublication(); ready(); return; }
                     if (head && choice==1) { NSMutableDictionary *resolution=[head mutableCopy]; resolution[@"resolve"]=@YES; selectCloud(resolution,head); return; }
                     // Keep old archive files for recovery; only replace automatic publication queue.
-                    state[@"queue"]=[NSMutableArray array]; state[@"blocked"]=@NO; resumePublication();
+                    state[@"queue"]=[NSMutableArray array]; state[@"blocked"]=@NO; [state removeObjectForKey:@"importNeedsReconciliation"]; resumePublication();
                     NSString *latest=captureNow(); if (!latest) problem(@"Cannot preserve local progress"); enqueue(latest,head[@"revision"]?:NSNull.null); [NSFileManager.defaultManager removeItemAtPath:latest error:nil]; pump(); ready();
                 });
             });
@@ -297,17 +458,22 @@ static void reconcile(void) {
         setStatus(@"Offline");
         // A restore journal is a hard gate, even when the player elects offline play.
         BOOL journal=[NSFileManager.defaultManager fileExistsAtPath:[statePath stringByAppendingPathComponent:@"restore.json"]];
-        choose(@"Cloud save",e.reason,journal?@[@"Retry recovery"]:@[@"Retry",@"Play offline"],^(NSUInteger i){if (i && !journal) protectedAction(^{pausePublication(); ready();}); else reconcile();});
+        NSMutableArray *options=[(journal ? @[@"Retry recovery"] : @[@"Retry",@"Play offline"]) mutableCopy];
+        if (landingActive) [options addObject:@"Back"];
+        choose(journal ? @"Save recovery needed" : @"Couldn't check cloud saves",e.reason,options,^(NSUInteger i){
+            if (landingActive && i==(journal ? 1 : 2)) dm_sync_menu(NULL);
+            else if (i && !journal) protectedAction(^{pausePublication(); ready();}); else reconcile();
+        });
     }
 }
 static void pairUI(void) {
     dispatch_async(dispatch_get_main_queue(),^{
 #if TARGET_OS_IPHONE
-        UIAlertController *a=[UIAlertController alertControllerWithTitle:@"Pair cloud saves" message:@"Enter your Whatbox HTTPS URL and a one-use code from the service's pair command. Tokens stay in Keychain." preferredStyle:UIAlertControllerStyleAlert];
-        [a addTextFieldWithConfigurationHandler:^(UITextField *f){f.placeholder=@"https://your-save-host"; f.autocapitalizationType=UITextAutocapitalizationTypeNone;}];
-        [a addTextFieldWithConfigurationHandler:^(UITextField *f){f.placeholder=@"Pairing code"; f.secureTextEntry=YES;}];
+        UIAlertController *a=[UIAlertController alertControllerWithTitle:credentials ? @"Cloud connection" : @"Set up cloud saves" message:@"Enter your cloud save server and a one-use pairing code. Each device needs its own code." preferredStyle:UIAlertControllerStyleAlert];
+        [a addTextFieldWithConfigurationHandler:^(UITextField *f){f.placeholder=@"https://your-save-host"; f.text=credentials[@"server"]; f.keyboardType=UIKeyboardTypeURL; f.autocapitalizationType=UITextAutocapitalizationTypeNone; f.autocorrectionType=UITextAutocorrectionTypeNo;}];
+        [a addTextFieldWithConfigurationHandler:^(UITextField *f){f.placeholder=@"Pairing code"; f.secureTextEntry=YES; f.textContentType=UITextContentTypeOneTimeCode;}];
         [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *v){dm_sync_menu((__bridge void *)presenter);}]];
-        [a addAction:[UIAlertAction actionWithTitle:@"Pair" style:UIAlertActionStyleDefault handler:^(UIAlertAction *v){
+        [a addAction:[UIAlertAction actionWithTitle:@"Connect" style:UIAlertActionStyleDefault handler:^(UIAlertAction *v){
             NSArray *values=@[a.textFields[0].text?:@"",a.textFields[1].text?:@""];
 #else
         NSAlert *a=[NSAlert new]; a.messageText=@"Pair cloud saves"; a.informativeText=@"HTTPS URL and one-use pairing code";
@@ -325,7 +491,7 @@ static void pairUI(void) {
                 persist(); reconcile();
             }); });
 #if TARGET_OS_IPHONE
-        }]]; [presenter presentViewController:a animated:YES completion:nil];
+        }]]; dm_host_present((__bridge void *)presenter, (__bridge void *)a);
 #endif
     });
 }
@@ -333,27 +499,279 @@ static void historyPage(NSNumber *after) {
     protectedAction(^{
         NSDictionary *page=get([NSString stringWithFormat:@"revisions?limit=100&after=%@",after?:@0]); NSArray *items=page[@"items"];
         NSMutableArray *labels=[NSMutableArray array];
-        for (NSDictionary *r in items) [labels addObject:[NSString stringWithFormat:@"%@ · %@ · %@%@",r[@"manifest"][@"displayTime"],r[@"deviceName"]?:r[@"manifest"][@"device"],r[@"manifest"][@"compatibility"][@"version"],[r[@"published"] boolValue]?@"":@" (conflict)"]];
+        for (NSDictionary *r in items) [labels addObject:[NSString stringWithFormat:@"%@ · %@%@",displaySaveTime(r[@"manifest"][@"displayTime"]),r[@"deviceName"] ?: r[@"manifest"][@"device"] ?: @"Unknown device",[r[@"published"] boolValue] ? @"" : @" · Unpublished save"]];
         BOOL more=page[@"next"] && page[@"next"]!=NSNull.null; if (more) [labels addObject:@"Next page"]; [labels addObject:@"Back"];
-        choose(@"Restore revision",@"Restoring history keeps local backups and publishes a new revision.",labels,^(NSUInteger n){
-            if (n<items.count) protectedAction(^{id h=get(@"head")[@"head"]; selectCloud(items[n],h==NSNull.null?nil:h);});
+        choose(@"Cloud backups",@"Choose a save to review before restoring. A backup of this device's progress will be kept.",labels,^(NSUInteger n){
+            if (n<items.count) {
+                NSDictionary *revision=items[n];
+                NSDictionary *build=revision[@"manifest"][@"compatibility"];
+                BOOL mismatch=![build isEqual:compatibility()] || ![build[@"builds"] count];
+                NSString *message=[NSString stringWithFormat:@"Save from %@\nDevice: %@\nGame version: %@\nThis replaces progress on this device. A local backup is kept first.%@",displaySaveTime(revision[@"manifest"][@"displayTime"]),revision[@"deviceName"] ?: revision[@"manifest"][@"device"] ?: @"unknown",build[@"version"] ?: @"unknown",mismatch ? @"\nDifferent or unknown game build/DLC: this save may be incompatible." : @""];
+                choose(@"Restore this cloud backup?",message,@[mismatch ? @"Restore anyway" : @"Restore backup",@"Cancel"],^(NSUInteger choice){
+                    if (choice) { dm_sync_menu(NULL); return; }
+                    protectedAction(^{id h=get(@"head")[@"head"]; installWhenIdle(revision,h==NSNull.null?nil:h);});
+                });
+            }
             else if (more && n==items.count) historyPage(page[@"next"]); else dm_sync_menu(NULL);
         });
     });
 }
-void dm_sync_menu(void *p) {
-    if (!dispatch_get_specific(&workerKey)) { dispatch_async(worker,^{dm_sync_menu(p);}); return; }
-    if (p) presenter=(__bridge id)p;
-    if (running) {
-        choose(@"Cloud saves",currentStatus(),@[@"Sync now",@"Close"],^(NSUInteger i){if (!i) { resumePublication(); state[@"paused"]=@NO; [state removeObjectForKey:@"retryAfter"]; dm_fs_sync_capture(); pump(); }}); return;
+// Explicit capture does not touch credentials, automatic capture counters or the
+// upload queue. Only cloning runs under the guest filesystem's root locks.
+static void cloneExplicit(void *context) {
+    NSString *__strong *result = (NSString *__strong *)context;
+    *result = captureNow();
+}
+static NSString *captureCommitted(void) {
+    if ([NSFileManager.defaultManager fileExistsAtPath:[statePath stringByAppendingPathComponent:@"restore.json"]]) problem(@"Restore recovery is required before capturing live roots. Retained recovery copies can still be exported.");
+    NSString *capture=nil; dm_fs_capture_with(cloneExplicit, &capture);
+    if (!capture) problem(@"Cannot capture committed saves; local progress is unchanged");
+    return capture;
+}
+static NSString *newWorkspace(NSString *prefix) {
+    NSString *path=[statePath stringByAppendingPathComponent:[prefix stringByAppendingString:NSUUID.UUID.UUIDString]];
+    if (![NSFileManager.defaultManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil]) problem(@"Cannot create staging directory; free unrelated storage and retry");
+    return path;
+}
+static NSString *writeBackup(NSString *capture, NSString *directory, BOOL current) {
+    NSMutableDictionary *manifest=[[DMSaveArchive inventory:capture] mutableCopy];
+    NSString *stamp=[NSISO8601DateFormatter.new stringFromDate:NSDate.date];
+    [manifest addEntriesFromDictionary:@{@"format":@1,@"revision":NSUUID.UUID.UUIDString.lowercaseString,@"parent":NSNull.null,@"title":@DM_GAME_ID,@"profile":@"default",@"device":credentials[@"device"] ?: NSUUID.UUID.UUIDString.lowercaseString,@"displayTime":current ? stamp : @"unknown",@"compatibility":current ? compatibility() : @{@"version":@"unknown",@"builds":@[],@"dlc":@[]}}];
+    NSString *file=[directory stringByAppendingPathComponent:[NSString stringWithFormat:@"%s-%@.nxsave",DM_GAME_ID,[stamp stringByReplacingOccurrencesOfString:@":" withString:@"-"]]];
+    [DMSaveArchive write:manifest capture:capture to:file]; [DMSaveArchive read:file into:nil]; return file;
+}
+static void copyBounded(NSURL *url, NSString *destination) {
+    NSInputStream *input=[NSInputStream inputStreamWithURL:url]; NSOutputStream *output=[NSOutputStream outputStreamToFileAtPath:destination append:NO];
+    [input open]; [output open]; NSUInteger total=0;
+    @try {
+        uint8_t buffer[65536]; NSInteger n;
+        while ((n=[input read:buffer maxLength:sizeof buffer])>0) {
+            total+=n; if (total>(128u<<20)) problem(@"Archive exceeds the 128 MiB import limit");
+            NSInteger offset=0; while (offset<n) { NSInteger written=[output write:buffer+offset maxLength:n-offset]; if (written<=0) problem(@"Cannot stage archive; check free storage"); offset+=written; }
+        }
+        if (n<0 || !total) problem(@"Cannot read selected archive");
+    } @finally { [input close]; [output close]; }
+}
+static void importFile(NSURL *url);
+#if TARGET_OS_IPHONE
+@interface DMSavePicker : NSObject <UIDocumentPickerDelegate>
+@property NSString *workspace;
+@property BOOL importing;
+@end
+static DMSavePicker *filePicker;
+@implementation DMSavePicker
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    NSString *workspace=self.workspace; filePicker=nil;
+    dispatch_async(worker,^{ if (workspace) [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); });
+}
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    NSString *workspace=self.workspace; BOOL importing=self.importing; filePicker=nil;
+    dispatch_async(worker,^{
+        if (importing && urls.count) importFile(urls.firstObject);
+        else { if (workspace) [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); }
+    });
+}
+@end
+#endif
+static void exportFile(NSString *file, NSString *workspace) {
+    dispatch_async(dispatch_get_main_queue(),^{
+#if TARGET_OS_IPHONE
+        filePicker=[DMSavePicker new]; filePicker.workspace=workspace;
+        UIDocumentPickerViewController *picker=[[UIDocumentPickerViewController alloc] initForExportingURLs:@[[NSURL fileURLWithPath:file]] asCopy:YES];
+        picker.delegate=filePicker; dm_host_present((__bridge void *)presenter, (__bridge void *)picker);
+#else
+        NSSavePanel *panel=[NSSavePanel savePanel]; panel.nameFieldStringValue=file.lastPathComponent;
+        if ([panel runModal]==NSModalResponseOK) {
+            NSURL *destination=panel.URL;
+            dispatch_async(worker,^{ protectedAction(^{ copyBounded([NSURL fileURLWithPath:file],destination.path); }); [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); });
+        } else dispatch_async(worker,^{ [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); });
+#endif
+    });
+}
+static void exportBackup(NSString *retained) {
+    protectedAction(^{
+        NSString *workspace=newWorkspace(@"export-"), *capture=nil;
+        @try {
+            NSString *file;
+            if ([retained.pathExtension isEqual:@"nxsave"]) {
+                file=[workspace stringByAppendingPathComponent:retained.lastPathComponent]; copyBounded([NSURL fileURLWithPath:retained],file); [DMSaveArchive read:file into:nil];
+            } else { capture=retained ?: captureCommitted(); file=writeBackup(capture,workspace,retained==nil); }
+            NSDictionary *m=[DMSaveArchive read:file into:nil];
+            if (landingActive || dashboardActive) { exportFile(file,workspace); }
+            else choose(@"Export committed save",[NSString stringWithFormat:@"Game: %@\nVersion: %@\nArchive time: %@\nThis does not force an in-game save. Retained copies keep their original contents.",m[@"title"],m[@"compatibility"][@"version"] ?: @"unknown",m[@"displayTime"] ?: @"unknown"],@[@"Save file",@"Cancel"],^(NSUInteger i){
+                if (!i) exportFile(file,workspace); else { [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); }
+            });
+        } @catch (NSException *e) { [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; @throw; }
+        @finally { if (capture && !retained) [NSFileManager.defaultManager removeItemAtPath:capture error:nil]; }
+    });
+}
+static void recoveryExports(void) {
+    NSMutableArray *paths=[NSMutableArray array], *labels=[NSMutableArray array];
+    for (NSString *name in [[NSFileManager.defaultManager contentsOfDirectoryAtPath:statePath error:nil] sortedArrayUsingSelector:@selector(compare:)]) {
+        if ([name hasPrefix:@"backup-"] || [name.pathExtension isEqual:@"nxsave"]) { [paths addObject:[statePath stringByAppendingPathComponent:name]]; [labels addObject:name]; }
     }
-    choose(@"Cloud saves",credentials?currentStatus():@"Sync is disabled until paired. Sync uploads committed saves; save in-game first.",credentials?@[@"Check cloud and play",@"History / restore",@"Pair again",@"Play offline"]:@[@"Play locally",@"Pair"],^(NSUInteger i){
+    [labels addObject:@"Back"];
+    choose(@"Recovery copies",@"Export a preserved save to Files. Nothing is deleted. Some older copies have no recorded game version or save time.",labels,^(NSUInteger i){ if (i<paths.count) exportBackup(paths[i]); else dm_sync_menu(NULL); });
+}
+static NSMutableDictionary *importState(void) {
+    NSMutableDictionary *next=[state mutableCopy];
+    // Keep old queue entries and ancestry as evidence until an explicit prelaunch
+    // reconciliation. Neither foreign metadata nor a late upload may replace it.
+    next[@"importNeedsReconciliation"]=@YES; next[@"blocked"]=@YES;
+    return next;
+}
+static void installImport(NSString *file, NSString *workspace) {
+    protectedAction(^{
+        if (running || uploading || captures) problem(@"Wait for save operations to finish, then import before launch");
+        recoverIfNeeded();
+        NSString *stage=[workspace stringByAppendingPathComponent:@"roots"];
+        NSDictionary *m=[DMSaveArchive read:file into:stage];
+        if (![m[@"title"] isEqual:@DM_GAME_ID] || ![m[@"profile"] isEqual:@"default"]) problem(@"Archive identity mismatch");
+        NSMutableDictionary *next=credentials ? importState() : [state mutableCopy];
+        [DMSaveArchive restore:stage manifest:m state:statePath save:savePath metadata:next]; state=next;
+        handoffRevision=nil; localDirty=YES; lastError=nil;
+        setStatus(credentials ? @"Imported locally — check cloud and choose a branch before publication" : @"Local backup imported");
+        [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL);
+    });
+    importing=NO;
+}
+static void importFile(NSURL *url) {
+    protectedAction(^{
+        if (running) problem(@"Restart to import before the game mounts its saves");
+        recoverIfNeeded();
+        NSString *workspace=newWorkspace(@"import-"), *file=[workspace stringByAppendingPathComponent:@"selected.nxsave"];
+        BOOL scoped=[url startAccessingSecurityScopedResource];
+        @try {
+            copyBounded(url,file); NSDictionary *m=[DMSaveArchive read:file into:nil];
+            if (![m[@"title"] isEqual:@DM_GAME_ID] || ![m[@"profile"] isEqual:@"default"]) problem(@"This archive belongs to a different title or profile");
+            NSDictionary *c=m[@"compatibility"]; if (![c isKindOfClass:NSDictionary.class]) c=@{}; BOOL mismatch=![c isEqual:compatibility()] || ![c[@"builds"] count];
+            NSString *message=[NSString stringWithFormat:@"Game version: %@\nSaved: %@\nThis replaces progress on this device. A verified backup is kept first.%@%@",c[@"version"] ?: @"unknown",displaySaveTime(m[@"displayTime"]),credentials ? @"\nCloud progress will be checked before this save can be uploaded." : @"",mismatch ? @"\nDifferent or unknown game build/DLC: this save may be incompatible." : @""];
+            choose(@"Import local backup",message,@[mismatch ? @"Import anyway" : @"Import",@"Cancel"],^(NSUInteger i){
+                if (i) { [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; dm_sync_menu(NULL); return; }
+                importing=YES;
+                // No ancestry changes while a background task has an unknown
+                // outcome. Let the normal receipt path finish, then retry import.
+                if (transport) [transport.session getAllTasksWithCompletionHandler:^(NSArray<NSURLSessionTask *> *tasks){ dispatch_async(worker,^{
+                    if (tasks.count || uploading || captures) { importing=NO; [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; choose(@"Upload still outstanding",@"Let the upload finish or restart and reconcile its receipt before importing. Local saves are unchanged.",@[@"Back"],^(NSUInteger n){dm_sync_menu(NULL);}); }
+                    else installImport(file,workspace);
+                }); }]; else installImport(file,workspace);
+            });
+        } @catch(NSException *e) { [NSFileManager.defaultManager removeItemAtPath:workspace error:nil]; @throw; }
+        @finally { if (scoped) [url stopAccessingSecurityScopedResource]; }
+    });
+}
+static void importPicker(void) {
+    if (running) { choose(@"Restart required",@"Import and history restore are available before launch only.",@[@"OK"],^(NSUInteger i){}); return; }
+    dispatch_async(dispatch_get_main_queue(),^{
+#if TARGET_OS_IPHONE
+        filePicker=[DMSavePicker new]; filePicker.importing=YES;
+        UIDocumentPickerViewController *picker=[[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeOpen];
+        picker.delegate=filePicker; picker.allowsMultipleSelection=NO; dm_host_present((__bridge void *)presenter, (__bridge void *)picker);
+#else
+        NSOpenPanel *panel=[NSOpenPanel openPanel]; panel.allowsMultipleSelection=NO; panel.canChooseDirectories=NO;
+        if ([panel runModal]==NSModalResponseOK) { NSURL *url=panel.URL; dispatch_async(worker,^{ importFile(url); }); }
+        else dm_sync_menu(NULL);
+#endif
+    });
+}
+static NSDictionary *saveAction(NSString *identifier, NSString *title, NSString *group, NSString *icon, BOOL primary) {
+    return @{@"id":identifier, @"title":title, @"group":group, @"icon":icon, @"primary":@(primary)};
+}
+static void playOffline(void) {
+    protectedAction(^{
+        launchRequested=YES;
+        [DMSaveArchive recover:statePath save:savePath];
+        state=[jsonFile([statePath stringByAppendingPathComponent:@"state.json"]) mutableCopy] ?: [NSMutableDictionary dictionary];
+        pausePublication(); ready();
+    });
+}
+static void inlineMenu(void) {
+    if (landingActive) launchRequested=NO;
+    NSMutableArray *actions=[NSMutableArray array];
+    if (!running) {
+        if (credentials) {
+            [actions addObject:saveAction(@"history",@"Restore cloud backup",@"Cloud saves",@"clock.arrow.circlepath",NO)];
+            [actions addObject:saveAction(@"offline",@"Play offline",@"Cloud saves",@"icloud.slash",NO)];
+        }
+        [actions addObject:saveAction(@"connect",credentials ? @"Cloud connection" : @"Set up cloud saves",@"Connection",@"icloud",!credentials)];
+    } else if (credentials && !remoteAdvanced && ![state[@"blocked"] boolValue] && ![state[@"importNeedsReconciliation"] boolValue]) {
+        [actions addObject:saveAction(@"sync",[state[@"offlinePaused"] boolValue] ? @"Resume & sync" : @"Sync now",@"Cloud saves",@"arrow.triangle.2.circlepath",YES)];
+    }
+    [actions addObject:saveAction(@"export",@"Export backup file",@"Backup files",@"square.and.arrow.up",NO)];
+    if (!running) [actions addObject:saveAction(@"import",@"Import backup file",@"Backup files",@"square.and.arrow.down",NO)];
+    [actions addObject:saveAction(@"recovery",@"Recovery copies",@"Backup files",@"externaldrive",NO)];
+    landingChooseContext(@"Saves",currentStatus(),[actions valueForKey:@"title"],YES,@{@"actions":actions},^(NSUInteger index){
+        NSString *identifier=actions[index][@"id"];
+        if ([identifier isEqual:@"sync"]) syncNow(YES);
+        else if ([identifier isEqual:@"connect"]) pairUI();
+        else if ([identifier isEqual:@"history"]) historyPage(@0);
+        else if ([identifier isEqual:@"offline"]) playOffline();
+        else if ([identifier isEqual:@"export"]) exportBackup(nil);
+        else if ([identifier isEqual:@"import"]) importPicker();
+        else if ([identifier isEqual:@"recovery"]) recoveryExports();
+    });
+}
+void dm_sync_menu(void *p) {
+    if (!dispatch_get_specific(&workerKey)) { id owner=p ? (__bridge id)p : nil; dispatch_async(worker,^{dm_sync_menu((__bridge void *)owner);}); return; }
+    if (p) presenter=(__bridge id)p;
+    if (landingActive || dashboardActive) { inlineMenu(); return; }
+#if TARGET_OS_IPHONE
+    // Completion of a picker/network operation must not reopen UI after the
+    // player has left the live save screen.
+    if (running) return;
+#endif
+    if (running) {
+        choose(@"Cloud saves",currentStatus(),@[@"Sync now",@"Prepare to switch devices",@"Export backup",@"Retained recovery copies",@"Import / restore",@"Close"],^(NSUInteger i){
+            if (i<2) syncNow(i==1); else if (i==2) exportBackup(nil); else if (i==3) recoveryExports(); else if (i==4) importPicker();
+        }); return;
+    }
+    NSArray *options=credentials ? @[@"Check cloud and play",@"History / restore",@"Pair again",@"Play offline",@"Export backup",@"Import backup",@"Retained recovery copies"] : @[@"Play locally",@"Pair",@"Export backup",@"Import backup",@"Retained recovery copies"];
+    void (^selected)(NSUInteger)=^(NSUInteger i){
+        NSUInteger backupIndex=credentials ? 4 : 2;
+        if (i==backupIndex) { exportBackup(nil); return; }
+        if (i==backupIndex+1) { importPicker(); return; }
+        if (i==backupIndex+2) { recoveryExports(); return; }
         if (!credentials) { if (!i) reconcile(); else pairUI(); return; }
         if (!i) reconcile();
         else if (i==2) pairUI();
-        else if (i==3) {
-            protectedAction(^{[DMSaveArchive recover:statePath save:savePath]; state=[jsonFile([statePath stringByAppendingPathComponent:@"state.json"]) mutableCopy]?:[NSMutableDictionary dictionary]; pausePublication(); ready();});
-        } else historyPage(@0);
+        else if (i==3) playOffline();
+        else historyPage(@0);
+    };
+    choose(@"Cloud saves",currentStatus(),options,selected);
+}
+
+static void landingAction(NSDictionary *action) {
+    if ((!landingActive && !dashboardActive) || ![action[@"token"] isEqual:@(landingToken)]) return;
+    BOOL play=[action[@"action"] isEqual:@"play"];
+    if (play && (!landingActive || !landingAtMenu)) return;
+    void (^selected)(NSUInteger)=landingSelection;
+    NSUInteger index=NSNotFound;
+    if (!play) {
+        if ([action[@"action"] isEqual:@"select"] && [action[@"index"] isKindOfClass:NSNumber.class]) index=[action[@"index"] unsignedIntegerValue];
+        else index=[inlinePage[@"actions"] indexOfObjectPassingTest:^BOOL(NSDictionary *item,NSUInteger i,BOOL *stop){return [item[@"id"] isEqual:action[@"action"]];}];
+        if (!selected || index>=landingOptionCount) return;
+    }
+    landingChoose(@"Saves",play ? @"Checking saves before launch…" : @"Please wait…",@[],NO,nil);
+    if (play) { launchRequested=YES; reconcile(); }
+    else selected(index);
+}
+static void dashboardOpened(id owner) {
+    if (!running) return;
+    presenter=owner; dashboardActive=YES;
+    setStatus(statusText); dm_sync_menu(NULL);
+}
+static void dashboardClosed(id owner) {
+    if (!dashboardActive || presenter!=owner) return;
+    dashboardActive=NO; landingSelection=nil; inlinePage=nil; ++landingToken;
+}
+void dm_sync_landing(void *p, void (*callback)(void)) {
+    dm_sync_prepare();
+    id owner=p ? (__bridge id)p : nil;
+    dispatch_async(worker,^{
+        presenter=owner; launchReady=callback; landingActive=YES; launchRequested=NO;
+        if (!transport) transport=[DMSaveTransport new];
+        setStatus(credentials ? @"Cloud will be checked when you play" : @"Saves stay on this device until paired");
+        dm_sync_menu(NULL);
     });
 }
 void dm_sync_prepare(void) {
@@ -368,9 +786,18 @@ void dm_sync_prepare(void) {
         // Only captures/staging that never became durable queue entries are disposable.
         if (![NSFileManager.defaultManager fileExistsAtPath:[statePath stringByAppendingPathComponent:@"restore.json"]])
             for (NSString *name in [NSFileManager.defaultManager contentsOfDirectoryAtPath:statePath error:nil])
-                if ([name hasPrefix:@"capture-"] || [name hasPrefix:@"stage-"]) [NSFileManager.defaultManager removeItemAtPath:[statePath stringByAppendingPathComponent:name] error:nil];
+                if ([name hasPrefix:@"capture-"] || [name hasPrefix:@"stage-"] || [name hasPrefix:@"export-"] || [name hasPrefix:@"import-"]) [NSFileManager.defaultManager removeItemAtPath:[statePath stringByAppendingPathComponent:name] error:nil];
         worker=dispatch_queue_create("org.nxnative.cloud-save",DISPATCH_QUEUE_SERIAL);
         dispatch_queue_set_specific(worker,&workerKey,&workerKey,NULL);
+        [NSNotificationCenter.defaultCenter addObserverForName:@"DMSaveScreenReady" object:nil queue:nil usingBlock:^(NSNotification *note){
+            id owner=note.object; dispatch_async(worker,^{dashboardOpened(owner);});
+        }];
+        [NSNotificationCenter.defaultCenter addObserverForName:@"DMSaveScreenClosed" object:nil queue:nil usingBlock:^(NSNotification *note){
+            id owner=note.object; dispatch_async(worker,^{dashboardClosed(owner);});
+        }];
+        [NSNotificationCenter.defaultCenter addObserverForName:@"DMSaveLauncherAction" object:nil queue:nil usingBlock:^(NSNotification *note){
+            NSDictionary *action=[note.userInfo copy]; dispatch_async(worker,^{landingAction(action);});
+        }];
         credentials=readCredentials(); atomic_store(&enabled,credentials!=nil);
         dm_fs_set_sync_callback(dm_sync_committed);
         state=[jsonFile([statePath stringByAppendingPathComponent:@"state.json"]) mutableCopy]?:[NSMutableDictionary dictionary];
@@ -381,8 +808,9 @@ void dm_sync_prepare(void) {
                 if ([state[@"offlinePaused"] boolValue]) { setStatus(@"Offline — uploads paused"); return; }
                 pump();
                 NSDictionary *h=get(@"head")[@"head"];
+                if (h && (id)h!=NSNull.null) state[@"sourceDevice"]=h[@"deviceName"] ?: h[@"manifest"][@"device"] ?: @"unknown";
                 if ((id)h!=NSNull.null && ![state[@"queue"] count] && ![h[@"revision"] isEqual:state[@"base"]]) { remoteAdvanced=YES; setStatus(@"Another device has newer progress — restart to load it"); }
-            } } @catch (NSException *e) { setStatus(@"Offline"); }
+            } } @catch (NSException *e) { handoffRevision=nil; lastError=e.reason; setStatus(@"Cloud status unknown — committed saves remain local"); }
         }); dispatch_resume(retryTimer);
     });
 }
